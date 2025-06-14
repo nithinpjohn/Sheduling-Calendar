@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Monitor, Zap, Bell, Palette, Globe, Shield } from 'lucide-react';
+import { Video, Zap, Bell, Palette, Globe, Shield, Mail, Calendar } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const [integrations, setIntegrations] = useState({
@@ -26,6 +25,11 @@ export const SettingsPage: React.FC = () => {
     compactView: false,
     autoSync: true,
     weekStart: 'monday',
+  });
+
+  const [mailIntegrations, setMailIntegrations] = useState({
+    gmail: false,
+    outlook: false,
   });
 
   const toggleIntegration = (service: keyof typeof integrations) => {
@@ -50,6 +54,13 @@ export const SettingsPage: React.FC = () => {
     }));
   };
 
+  const toggleMailIntegration = (service: keyof typeof mailIntegrations) => {
+    setMailIntegrations(prev => ({
+      ...prev,
+      [service]: !prev[service]
+    }));
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="mb-8">
@@ -70,7 +81,7 @@ export const SettingsPage: React.FC = () => {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Monitor className="h-5 w-5 text-blue-600" />
+              <Video className="h-5 w-5 text-blue-600" />
               <div>
                 <p className="font-medium">Zoom</p>
                 <p className="text-sm text-muted-foreground">Create Zoom meetings automatically</p>
@@ -86,7 +97,7 @@ export const SettingsPage: React.FC = () => {
           
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Monitor className="h-5 w-5 text-purple-600" />
+              <Calendar className="h-5 w-5 text-purple-600" />
               <div>
                 <p className="font-medium">Microsoft Teams</p>
                 <p className="text-sm text-muted-foreground">Integration with Teams meetings</p>
@@ -102,7 +113,7 @@ export const SettingsPage: React.FC = () => {
           
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Monitor className="h-5 w-5 text-green-600" />
+              <Video className="h-5 w-5 text-green-600" />
               <div>
                 <p className="font-medium">Google Meet</p>
                 <p className="text-sm text-muted-foreground">Add Google Meet links to events</p>
@@ -111,6 +122,49 @@ export const SettingsPage: React.FC = () => {
             <Switch
               checked={integrations.meet}
               onCheckedChange={() => toggleIntegration('meet')}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email Integrations
+          </CardTitle>
+          <CardDescription>
+            Connect your email accounts to view important emails in your dashboard.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Mail className="h-5 w-5 text-red-600" />
+              <div>
+                <p className="font-medium">Gmail</p>
+                <p className="text-sm text-muted-foreground">Access your Gmail inbox</p>
+              </div>
+            </div>
+            <Switch
+              checked={mailIntegrations.gmail}
+              onCheckedChange={() => toggleMailIntegration('gmail')}
+            />
+          </div>
+          
+          <Separator />
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Mail className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="font-medium">Microsoft Outlook</p>
+                <p className="text-sm text-muted-foreground">Access your Outlook inbox</p>
+              </div>
+            </div>
+            <Switch
+              checked={mailIntegrations.outlook}
+              onCheckedChange={() => toggleMailIntegration('outlook')}
             />
           </div>
         </CardContent>

@@ -12,9 +12,10 @@ import { TopMenuBar } from './TopMenuBar';
 import { LoginModal } from './LoginModal';
 import { ProfilePage } from './ProfilePage';
 import { SettingsPage } from './SettingsPage';
+import { MailInbox } from './MailInbox';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, BarChart3, PanelLeftClose, PanelLeftOpen, Settings } from 'lucide-react';
+import { CalendarIcon, BarChart3, PanelLeftClose, PanelLeftOpen, Settings, Mail } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
@@ -194,7 +195,7 @@ export const CalendarApp: React.FC = () => {
   const [showSummary, setShowSummary] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'calendar' | 'profile' | 'settings'>('dashboard');
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'calendar' | 'profile' | 'settings' | 'mails'>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [containerWidth, setContainerWidth] = useState([90]);
   const { toast } = useToast();
@@ -572,6 +573,12 @@ export const CalendarApp: React.FC = () => {
             <SettingsPage />
           </div>
         );
+      case 'mails':
+        return (
+          <div className="h-full overflow-y-auto">
+            <MailInbox />
+          </div>
+        );
       case 'calendar':
         return (
           <div className="h-full overflow-auto">
@@ -675,6 +682,15 @@ export const CalendarApp: React.FC = () => {
                     <CalendarIcon className="h-4 w-4" />
                     Calendar
                   </Button>
+                  <Button
+                    variant={currentPage === 'mails' ? "default" : "outline"}
+                    onClick={() => handleProtectedAction(() => setCurrentPage('mails'))}
+                    className="gap-2 rounded-lg"
+                  >
+                    <Mail className="h-4 w-4" />
+                    My Mails
+                  </Button>
+                  
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="gap-2 rounded-lg">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Bell, User, Settings, LogOut, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -100,9 +99,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                   <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs">
-                        {unreadCount}
-                      </Badge>
+                      <div className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></div>
                     )}
                   </Button>
                 </DropdownMenuTrigger>
