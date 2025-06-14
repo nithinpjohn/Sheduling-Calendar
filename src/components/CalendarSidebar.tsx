@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Plus, Filter, Calendar, BarChart3, Users, Lightbulb, GripVertical } from 'lucide-react';
+import { Plus, Filter, Calendar, BarChart3, Users, Lightbulb, GripVertical, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { ColorPicker } from './ColorPicker';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Sidebar, SidebarContent } from '@/components/ui/sidebar';
 
 interface CalendarSidebarProps {
   events: CalendarEvent[];
@@ -41,6 +43,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [currentSuggestions, setCurrentSuggestions] = useState(suggestedEvents);
 
   const upcomingEvents = events
     .filter(event => isFuture(parseISO(event.start)))
@@ -90,227 +93,270 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     return categories.find(c => c.id === categoryId);
   };
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, suggestedEvent: SuggestedEvent) => {
-    e.dataTransfer.effectAllowed = 'copy';
-    const dragData = JSON.stringify({
-      type: 'suggested-event',
-      data: suggestedEvent
-    });
-    e.dataTransfer.setData('application/json', dragData);
-    e.dataTransfer.setData('text/plain', dragData);
+  const shuffleSuggestions = () => {
+    const shuffled = [...currentSuggestions].sort(() => Math.random() - 0.5);
+    setCurrentSuggestions(shuffled);
   };
 
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, suggestedEvent: SuggestedEvent) => {
+    console.log('Drag started for:', suggestedEvent.title);
+    e.dataTransfer.effectAllowed = 'copy';
+    
+    // Set the data in multiple formats for better compatibility
+    const dragData = {
+      type: 'suggested-event',
+      data: suggestedEvent
+    };
+    
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+    e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+    
+    // Add visual feedback
+    const target = e.currentTarget;
+    target.classList.add('dragging');
+    target.style.opacity = '0.5';
+  };
+
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    console.log('Drag ended');
+    const target = e.currentTarget;
+    target.classList.remove('dragging');
+    target.style.opacity = '1';
+  };
+
+  React.useEffect(() => {
+    setCurrentSuggestions(suggestedEvents);
+  }, [suggestedEvents]);
+
   return (
-    <div className="w-80 border-r bg-card p-6 overflow-y-auto">
-      <div className="space-y-6">
-        {/* Create Event Button */}
-        <Button onClick={onCreateNew} className="w-full gap-2">
-          <Plus className="h-4 w-4" />
-          Create Event
-        </Button>
+    <Sidebar>
+      <SidebarContent>
+        <div className="w-80 bg-card p-6 overflow-y-auto h-full">
+          <div className="space-y-6">
+            {/* Create Event Button */}
+            <Button onClick={onCreateNew} className="w-full gap-2 rounded-lg">
+              <Plus className="h-4 w-4" />
+              Create Event
+            </Button>
 
-        {/* Categories */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Categories
-            </Label>
-            <Popover open={isCreatingCategory} onOpenChange={setIsCreatingCategory}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="space-y-4">
-                  <h4 className="font-medium">Create Category</h4>
-                  <div className="space-y-2">
-                    <Label>Name</Label>
-                    <Input
-                      placeholder="Category name"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Color</Label>
-                    <ColorPicker
-                      color={newCategoryColor}
-                      onChange={setNewCategoryColor}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={createCategory} size="sm">
-                      Create
+            {/* Categories */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Categories
+                </Label>
+                <Popover open={isCreatingCategory} onOpenChange={setIsCreatingCategory}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="rounded-lg">
+                      <Plus className="h-3 w-3" />
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setIsCreatingCategory(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div className="space-y-2">
-            {categories.map((category) => (
-              <div key={category.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`category-${category.id}`}
-                  checked={selectedCategories.length === 0 || selectedCategories.includes(category.id)}
-                  onCheckedChange={() => handleCategoryToggle(category.id)}
-                />
-                <div className="flex items-center gap-2 flex-1">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: category.color }}
-                  />
-                  <Label htmlFor={`category-${category.id}`} className="text-sm flex-1">
-                    {category.name}
-                  </Label>
-                  <Badge variant="secondary" className="text-xs">
-                    {events.filter(e => e.category === category.id).length}
-                  </Badge>
-                  {!category.isDefault && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteCategory(category.id)}
-                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                    >
-                      ×
-                    </Button>
-                  )}
-                </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 rounded-lg">
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Create Category</h4>
+                      <div className="space-y-2">
+                        <Label>Name</Label>
+                        <Input
+                          placeholder="Category name"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          className="rounded-lg"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Color</Label>
+                        <ColorPicker
+                          color={newCategoryColor}
+                          onChange={setNewCategoryColor}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={createCategory} size="sm" className="rounded-lg">
+                          Create
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setIsCreatingCategory(false)}
+                          className="rounded-lg"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* AI Suggested Events */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium flex items-center gap-2">
-            <Lightbulb className="h-4 w-4" />
-            AI Suggested Events
-          </Label>
-          <ScrollArea className="h-48">
-            <div className="space-y-2">
-              {suggestedEvents.map((suggestedEvent) => {
-                const category = getCategory(suggestedEvent.category);
-                return (
-                  <Card
-                    key={suggestedEvent.id}
-                    className="cursor-move transition-all hover:shadow-md border-l-4 select-none"
-                    style={{ borderLeftColor: category?.color }}
-                    draggable={true}
-                    onDragStart={(e) => handleDragStart(e, suggestedEvent)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-start gap-2">
-                        <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-sm truncate">{suggestedEvent.title}</h4>
-                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                            {suggestedEvent.description}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {suggestedEvent.duration}h
-                            </Badge>
-                            {suggestedEvent.defaultAttendees && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Users className="h-3 w-3" />
-                                {suggestedEvent.defaultAttendees}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              <div className="space-y-2">
+                {categories.map((category) => (
+                  <div key={category.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`category-${category.id}`}
+                      checked={selectedCategories.length === 0 || selectedCategories.includes(category.id)}
+                      onCheckedChange={() => handleCategoryToggle(category.id)}
+                    />
+                    <div className="flex items-center gap-2 flex-1">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <Label htmlFor={`category-${category.id}`} className="text-sm flex-1">
+                        {category.name}
+                      </Label>
+                      <Badge variant="secondary" className="text-xs rounded-lg">
+                        {events.filter(e => e.category === category.id).length}
+                      </Badge>
+                      {!category.isDefault && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteCategory(category.id)}
+                          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                        >
+                          ×
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </ScrollArea>
-        </div>
 
-        <Separator />
-
-        {/* Upcoming Events */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Upcoming Events
-          </Label>
-          <div className="space-y-2">
-            {upcomingEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No upcoming events</p>
-            ) : (
-              upcomingEvents.map((event) => {
-                const category = getCategory(event.category);
-                return (
-                  <Card
-                    key={event.id}
-                    className="cursor-pointer transition-all hover:shadow-md border-l-4"
-                    style={{ borderLeftColor: category?.color }}
-                    onClick={() => onEventClick(event)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-sm truncate">{event.title}</h4>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {getEventTimeLabel(event)} • {format(parseISO(event.start), 'h:mm a')}
-                          </p>
-                          {event.location && (
-                            <p className="text-xs text-muted-foreground truncate mt-1">
-                              📍 {event.location}
-                            </p>
-                          )}
-                          {event.attendees && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <Users className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">{event.attendees} attendees</span>
+            {/* AI Suggested Events */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4" />
+                  AI Suggested Events
+                </Label>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={shuffleSuggestions}
+                  className="text-xs gap-1 rounded-lg"
+                >
+                  <Shuffle className="h-3 w-3" />
+                  Shuffle
+                </Button>
+              </div>
+              <ScrollArea className="h-48">
+                <div className="space-y-2">
+                  {currentSuggestions.map((suggestedEvent) => {
+                    const category = getCategory(suggestedEvent.category);
+                    return (
+                      <Card
+                        key={suggestedEvent.id}
+                        className="cursor-move transition-all hover:shadow-md border-l-4 select-none draggable-event rounded-lg"
+                        style={{ borderLeftColor: category?.color }}
+                        draggable={true}
+                        onDragStart={(e) => handleDragStart(e, suggestedEvent)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-start gap-2">
+                            <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm truncate">{suggestedEvent.title}</h4>
+                              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                                {suggestedEvent.description}
+                              </p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="secondary" className="text-xs rounded-lg">
+                                  {suggestedEvent.duration}h
+                                </Badge>
+                                {suggestedEvent.defaultAttendees && (
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Users className="h-3 w-3" />
+                                    {suggestedEvent.defaultAttendees}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Quick Stats
-          </Label>
-          <div className="grid grid-cols-2 gap-2">
-            <Card>
-              <CardContent className="p-3 text-center">
-                <div className="text-2xl font-bold text-primary">{events.length}</div>
-                <div className="text-xs text-muted-foreground">Total Events</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-3 text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {events.filter(e => isFuture(parseISO(e.start))).length}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
-                <div className="text-xs text-muted-foreground">Upcoming</div>
-              </CardContent>
-            </Card>
+              </ScrollArea>
+            </div>
+
+            <Separator />
+
+            {/* Upcoming Events */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Upcoming Events
+              </Label>
+              <div className="space-y-2">
+                {upcomingEvents.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No upcoming events</p>
+                ) : (
+                  upcomingEvents.map((event) => {
+                    const category = getCategory(event.category);
+                    return (
+                      <Card
+                        key={event.id}
+                        className="cursor-pointer transition-all hover:shadow-md border-l-4 rounded-lg"
+                        style={{ borderLeftColor: category?.color }}
+                        onClick={() => onEventClick(event)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm truncate">{event.title}</h4>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {getEventTimeLabel(event)} • {format(parseISO(event.start), 'h:mm a')}
+                              </p>
+                              {event.location && (
+                                <p className="text-xs text-muted-foreground truncate mt-1">
+                                  📍 {event.location}
+                                </p>
+                              )}
+                              {event.attendees && (
+                                <div className="flex items-center gap-1 mt-1">
+                                  <Users className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">{event.attendees} attendees</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Quick Stats
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Card className="rounded-lg">
+                  <CardContent className="p-3 text-center">
+                    <div className="text-2xl font-bold text-primary">{events.length}</div>
+                    <div className="text-xs text-muted-foreground">Total Events</div>
+                  </CardContent>
+                </Card>
+                <Card className="rounded-lg">
+                  <CardContent className="p-3 text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {events.filter(e => isFuture(parseISO(e.start))).length}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Upcoming</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </SidebarContent>
+    </Sidebar>
   );
 };

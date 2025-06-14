@@ -11,13 +11,22 @@ import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tool
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Settings, Users, TrendingUp, Calendar, Clock, MapPin, Activity, BarChart3, PieChart as PieChartIcon, Shuffle } from 'lucide-react';
+import { GripVertical, Settings, Users, TrendingUp, Calendar, Clock, MapPin, Activity, BarChart3, PieChart as PieChartIcon, Menu } from 'lucide-react';
 import { WeeklyBarChart } from './WeeklyBarChart';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { CalendarSidebar } from './CalendarSidebar';
 
 interface SummaryPageProps {
   events: CalendarEvent[];
   categories: EventCategory[];
   onEventClick: (event: CalendarEvent) => void;
+  onCreateNew: () => void;
+  onOpenCommandSearch: () => void;
+  suggestedEvents: any[];
+  onSuggestedEventDrop: (eventData: any, date: Date) => void;
+  selectedCategories: string[];
+  setSelectedCategories: (categories: string[]) => void;
+  setCategories: (categories: EventCategory[]) => void;
 }
 
 interface DashboardCard {
@@ -87,14 +96,14 @@ const DashboardCard: React.FC<SortableCardProps> = ({ card, children }) => {
   };
   
   return (
-    <Card ref={setNodeRef} style={style} className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-card backdrop-blur-sm">
+    <Card ref={setNodeRef} style={style} className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-card backdrop-blur-sm rounded-lg">
       <CardHeader className="p-5 pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-xl bg-gradient-to-r ${card.gradient} text-white shadow-lg`}>
+            <div className={`p-2.5 rounded-lg bg-gradient-to-r ${card.gradient} text-white shadow-lg`}>
               {card.icon}
             </div>
-            <CardTitle className="text-lg font-semibold text-foreground">{card.title}</CardTitle>
+            <CardTitle className="text-lg font-semibold text-card-foreground">{card.title}</CardTitle>
           </div>
           <div {...attributes} {...listeners} className="cursor-grab opacity-50 hover:opacity-100 transition-opacity">
             <GripVertical className="h-4 w-4 text-muted-foreground" />
@@ -106,7 +115,18 @@ const DashboardCard: React.FC<SortableCardProps> = ({ card, children }) => {
   );
 };
 
-export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, onEventClick }) => {
+export const SummaryPage: React.FC<SummaryPageProps> = ({ 
+  events, 
+  categories, 
+  onEventClick, 
+  onCreateNew,
+  onOpenCommandSearch,
+  suggestedEvents,
+  onSuggestedEventDrop,
+  selectedCategories,
+  setSelectedCategories,
+  setCategories
+}) => {
   const [cards, setCards] = useState(defaultCards);
   const [showCustomize, setShowCustomize] = useState(false);
   const sensors = useSensors(
@@ -129,7 +149,6 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
     return eventDate >= weekStart && eventDate <= weekEnd;
   }).length;
 
-  // Category statistics
   const categoryStats = categories.map(category => {
     const count = events.filter(event => event.category === category.id).length;
     return {
@@ -139,12 +158,10 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
     };
   }).sort((a, b) => b.count - a.count);
 
-  // Upcoming events
   const upcomingEvents = [...events]
     .filter(event => new Date(event.start) >= today)
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
-  // Monthly data
   const sixMonthsAgo = subMonths(today, 5);
   const monthRange = eachMonthOfInterval({
     start: startOfMonth(sixMonthsAgo),
@@ -172,7 +189,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-100 dark:border-blue-800">
+              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-100 dark:border-blue-800">
                 <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">{events.filter(e => {
                   const eventDate = new Date(e.start);
                   const today = new Date();
@@ -180,47 +197,47 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
                 }).length}</div>
                 <div className="text-sm font-medium text-blue-700 dark:text-blue-300">Today</div>
               </div>
-              <div className="text-center p-4 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border border-green-100 dark:border-green-800">
+              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border border-green-100 dark:border-green-800">
                 <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">{thisWeekEvents}</div>
                 <div className="text-sm font-medium text-green-700 dark:text-green-300">This Week</div>
               </div>
-              <div className="text-center p-4 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border border-purple-100 dark:border-purple-800">
+              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border border-purple-100 dark:border-purple-800">
                 <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">{upcomingEvents.length}</div>
                 <div className="text-sm font-medium text-purple-700 dark:text-purple-300">Upcoming</div>
               </div>
-              <div className="text-center p-4 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-orange-100 dark:border-orange-800">
+              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-orange-100 dark:border-orange-800">
                 <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">{Math.round(events.reduce((acc, e) => acc + (e.attendees || 0), 0) / events.length) || 0}</div>
                 <div className="text-sm font-medium text-orange-700 dark:text-orange-300">Avg Attendees</div>
               </div>
             </div>
             
             <div className="space-y-1">
-              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors">
+              <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/50">
                     <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <span className="font-medium text-foreground">Total Events</span>
+                  <span className="font-medium text-card-foreground">Total Events</span>
                 </div>
-                <span className="font-bold text-foreground">{events.length}</span>
+                <span className="font-bold text-card-foreground">{events.length}</span>
               </div>
-              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors">
+              <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/50">
                     <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
-                  <span className="font-medium text-foreground">Total Attendees</span>
+                  <span className="font-medium text-card-foreground">Total Attendees</span>
                 </div>
-                <span className="font-bold text-foreground">{events.reduce((acc, e) => acc + (e.attendees || 0), 0)}</span>
+                <span className="font-bold text-card-foreground">{events.reduce((acc, e) => acc + (e.attendees || 0), 0)}</span>
               </div>
-              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors">
+              <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/50">
                     <MapPin className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <span className="font-medium text-foreground">Events with Location</span>
+                  <span className="font-medium text-card-foreground">Events with Location</span>
                 </div>
-                <span className="font-bold text-foreground">{events.filter(e => e.location).length}</span>
+                <span className="font-bold text-card-foreground">{events.filter(e => e.location).length}</span>
               </div>
             </div>
           </div>
@@ -234,7 +251,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
           <div className="space-y-3">
             {upcomingEvents.length === 0 ? (
               <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-muted to-muted/50 rounded-2xl flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center">
                   <Calendar className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <div className="text-muted-foreground font-medium">No upcoming meetings</div>
@@ -245,12 +262,12 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
                 return (
                   <div 
                     key={event.id} 
-                    className="flex items-center space-x-4 p-4 border border-border rounded-2xl hover:bg-muted/50 hover:border-border/80 cursor-pointer transition-all duration-200" 
+                    className="flex items-center space-x-4 p-4 border border-border rounded-lg hover:bg-muted/50 hover:border-border/80 cursor-pointer transition-all duration-200" 
                     onClick={() => onEventClick(event)}
                   >
                     <div className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: category?.color }} />
                     <div className="flex-1">
-                      <div className="font-semibold text-foreground text-sm mb-1">{event.title}</div>
+                      <div className="font-semibold text-card-foreground text-sm mb-1">{event.title}</div>
                       <div className="text-xs text-muted-foreground flex items-center gap-2">
                         <Clock className="h-3 w-3" />
                         {format(parseISO(event.start), 'MMM d, h:mm a')}
@@ -275,7 +292,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: 'none', 
-                    borderRadius: '12px', 
+                    borderRadius: '8px', 
                     boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     color: 'hsl(var(--card-foreground))'
                   }} 
@@ -328,12 +345,12 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
               </div>
               <div className="space-y-3">
                 {categoryStats.slice(0, 3).map((stat) => (
-                  <div key={stat.category} className="flex items-center justify-between text-sm p-3 rounded-xl bg-muted/50">
+                  <div key={stat.category} className="flex items-center justify-between text-sm p-3 rounded-lg bg-muted/50">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: stat.color }} />
-                      <span className="font-medium text-foreground">{stat.category}</span>
+                      <span className="font-medium text-card-foreground">{stat.category}</span>
                     </div>
-                    <span className="font-bold text-foreground">{stat.count}</span>
+                    <span className="font-bold text-card-foreground">{stat.count}</span>
                   </div>
                 ))}
               </div>
@@ -345,16 +362,16 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
         return (
           <div className="text-center space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-100 dark:border-blue-800">
+              <div className="p-6 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-100 dark:border-blue-800">
                 <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">{thisWeekEvents}</div>
                 <div className="text-sm font-medium text-blue-700 dark:text-blue-300">This Week</div>
               </div>
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border border-green-100 dark:border-green-800">
+              <div className="p-6 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border border-green-100 dark:border-green-800">
                 <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">+15%</div>
                 <div className="text-sm font-medium text-green-700 dark:text-green-300">vs Last Week</div>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground flex items-center justify-center gap-2 p-3 rounded-xl bg-muted/50">
+            <div className="text-sm text-muted-foreground flex items-center justify-center gap-2 p-3 rounded-lg bg-muted/50">
               <TrendingUp className="h-4 w-4 text-green-500" />
               Productivity is trending upward
             </div>
@@ -388,68 +405,83 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
   const enabledCards = cards.filter(card => card.enabled);
 
   return (
-    <div className="h-full overflow-auto bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">AI Dashboard</h1>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                <Shuffle className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-muted-foreground mt-2 text-lg">Intelligent insights and analytics for your calendar events</p>
-          </div>
-          <Dialog open={showCustomize} onOpenChange={setShowCustomize}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2 border-border hover:bg-muted rounded-xl px-6 py-2.5">
-                <Settings className="h-4 w-4" />
-                Customize Widgets
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-semibold">Customize Dashboard</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                {cards.map((card) => (
-                  <div key={card.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-r ${card.gradient} text-white`}>
-                        {card.icon}
-                      </div>
-                      <Label htmlFor={card.id} className="font-medium text-foreground">
-                        {card.title}
-                      </Label>
-                    </div>
-                    <Switch
-                      id={card.id}
-                      checked={card.enabled}
-                      onCheckedChange={() => toggleCard(card.id)}
-                    />
-                  </div>
-                ))}
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <CalendarSidebar
+          events={events}
+          categories={categories}
+          setCategories={setCategories}
+          selectedCategories={selectedCategories}
+          setSelectedCategories={setSelectedCategories}
+          onEventClick={onEventClick}
+          onOpenCommandSearch={onOpenCommandSearch}
+          onCreateNew={onCreateNew}
+          suggestedEvents={suggestedEvents}
+          onSuggestedEventDrop={onSuggestedEventDrop}
+        />
+        
+        <div className="flex-1 h-full overflow-auto bg-gradient-to-br from-background via-background to-muted/20">
+          <div className="p-8">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger />
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-card-foreground to-muted-foreground bg-clip-text text-transparent">AI Dashboard</h1>
+                  <p className="text-muted-foreground mt-2 text-lg">Intelligent insights and analytics for your calendar events</p>
+                </div>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <DndContext 
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext items={enabledCards.map(card => card.id)}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {enabledCards.map((card) => (
-                <DashboardCard key={card.id} card={card}>
-                  {renderCardContent(card)}
-                </DashboardCard>
-              ))}
+              <Dialog open={showCustomize} onOpenChange={setShowCustomize}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2 border-border hover:bg-muted rounded-lg px-6 py-2.5">
+                    <Settings className="h-4 w-4" />
+                    Customize Widgets
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="rounded-lg">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-semibold">Customize Dashboard</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    {cards.map((card) => (
+                      <div key={card.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted">
+                        <div className="flex items-center space-x-3">
+                          <div className={`p-2 rounded-lg bg-gradient-to-r ${card.gradient} text-white`}>
+                            {card.icon}
+                          </div>
+                          <Label htmlFor={card.id} className="font-medium text-card-foreground">
+                            {card.title}
+                          </Label>
+                        </div>
+                        <Switch
+                          id={card.id}
+                          checked={card.enabled}
+                          onCheckedChange={() => toggleCard(card.id)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-          </SortableContext>
-        </DndContext>
+
+            <DndContext 
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={enabledCards.map(card => card.id)}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {enabledCards.map((card) => (
+                    <DashboardCard key={card.id} card={card}>
+                      {renderCardContent(card)}
+                    </DashboardCard>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
