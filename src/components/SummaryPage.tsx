@@ -1,18 +1,15 @@
-
-import React, { useState } from 'react';
-import { CalendarEvent, EventCategory } from './CalendarApp';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Settings, Users, TrendingUp, Calendar, Clock, MapPin, Activity, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
+import { CalendarEvent, EventCategory, SuggestedEvent } from './CalendarApp';
 import { WeeklyBarChart } from './WeeklyBarChart';
+import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays, isSameDay } from 'date-fns';
+import { Calendar, Clock, Users, MapPin, Plus, Search, TrendingUp, Activity, Target, Zap, GripVertical } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 interface SummaryPageProps {
   events: CalendarEvent[];
@@ -20,134 +17,26 @@ interface SummaryPageProps {
   onEventClick: (event: CalendarEvent) => void;
   onCreateNew: () => void;
   onOpenCommandSearch: () => void;
-  suggestedEvents: any[];
-  onSuggestedEventDrop: (eventData: any, date: Date) => void;
+  suggestedEvents: SuggestedEvent[];
+  onSuggestedEventDrop: (eventData: SuggestedEvent, date: Date) => void;
   selectedCategories: string[];
   setSelectedCategories: (categories: string[]) => void;
   setCategories: (categories: EventCategory[]) => void;
 }
 
-interface DashboardCard {
-  id: string;
-  title: string;
-  icon: React.ReactNode;
-  enabled: boolean;
-  gradient: string;
-}
-
-const defaultCards: DashboardCard[] = [
-  {
-    id: 'overview',
-    title: 'Events Overview',
-    icon: <Activity className="w-5 h-5" />,
-    enabled: true,
-    gradient: 'from-blue-500 to-blue-600',
-  },
-  {
-    id: 'weekly',
-    title: 'Weekly Activity',
-    icon: <BarChart3 className="w-5 h-5" />,
-    enabled: true,
-    gradient: 'from-green-500 to-green-600',
-  },
-  {
-    id: 'upcoming',
-    title: 'Upcoming Meetings',
-    icon: <Calendar className="w-5 h-5" />,
-    enabled: true,
-    gradient: 'from-purple-500 to-purple-600',
-  },
-  {
-    id: 'monthly',
-    title: 'Monthly Trends',
-    icon: <TrendingUp className="w-5 h-5" />,
-    enabled: true,
-    gradient: 'from-red-500 to-red-600',
-  },
-  {
-    id: 'categories',
-    title: 'Category Analytics',
-    icon: <PieChartIcon className="w-5 h-5" />,
-    enabled: true,
-    gradient: 'from-yellow-500 to-yellow-600',
-  },
-  {
-    id: 'productivity',
-    title: 'Productivity Insights',
-    icon: <TrendingUp className="w-5 h-5" />,
-    enabled: true,
-    gradient: 'from-orange-500 to-orange-600',
-  },
-];
-
-interface SortableCardProps {
-  card: DashboardCard;
-  children: React.ReactNode;
-}
-
-const DashboardCard: React.FC<SortableCardProps> = ({ card, children }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id });
-  
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1000 : 'auto',
-  };
-  
-  return (
-    <Card 
-      ref={setNodeRef} 
-      style={style} 
-      className={`h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-card backdrop-blur-sm rounded-lg ${isDragging ? 'shadow-2xl' : ''}`}
-    >
-      <CardHeader className="p-5 pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-lg bg-gradient-to-r ${card.gradient} text-white shadow-lg`}>
-              {card.icon}
-            </div>
-            <CardTitle className="text-lg font-semibold text-card-foreground">{card.title}</CardTitle>
-          </div>
-          <div 
-            {...attributes} 
-            {...listeners} 
-            className="cursor-grab opacity-50 hover:opacity-100 transition-opacity touch-none"
-          >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-5 pt-0">{children}</CardContent>
-    </Card>
-  );
-};
-
-export const SummaryPage: React.FC<SummaryPageProps> = ({ 
-  events, 
-  categories, 
-  onEventClick, 
+export const SummaryPage: React.FC<SummaryPageProps> = ({
+  events,
+  categories,
+  onEventClick,
   onCreateNew,
   onOpenCommandSearch,
   suggestedEvents,
   onSuggestedEventDrop,
   selectedCategories,
   setSelectedCategories,
-  setCategories
+  setCategories,
 }) => {
-  const [cards, setCards] = useState(defaultCards);
-  const [showCustomize, setShowCustomize] = useState(false);
-  
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Calculate statistics
   const totalEvents = events.length;
@@ -396,84 +285,264 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
     }
   };
 
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, suggestedEvent: SuggestedEvent) => {
+    console.log('Starting drag for:', suggestedEvent.title);
     
-    if (active.id !== over.id) {
-      setCards((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.dropEffect = 'copy';
+    
+    const dragData = {
+      type: 'suggested-event',
+      data: suggestedEvent
+    };
+    
+    const dataString = JSON.stringify(dragData);
+    e.dataTransfer.setData('application/json', dataString);
+    e.dataTransfer.setData('text/plain', dataString);
+    
+    // Add visual feedback
+    const target = e.currentTarget;
+    target.style.opacity = '0.6';
+    target.style.transform = 'scale(0.95)';
+    target.classList.add('dragging');
   };
 
-  const toggleCard = (cardId: string) => {
-    setCards(cards.map(card => 
-      card.id === cardId ? { ...card, enabled: !card.enabled } : card
-    ));
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    console.log('Ending drag');
+    const target = e.currentTarget;
+    target.style.opacity = '1';
+    target.style.transform = 'scale(1)';
+    target.classList.remove('dragging');
   };
 
-  const enabledCards = cards.filter(card => card.enabled);
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
 
   return (
-    <div className="flex-1 h-screen overflow-auto bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-card-foreground to-muted-foreground bg-clip-text text-transparent">AI Dashboard</h1>
-            <p className="text-muted-foreground mt-2 text-lg">Intelligent insights and analytics for your calendar events</p>
-          </div>
-          <Dialog open={showCustomize} onOpenChange={setShowCustomize}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2 border-border hover:bg-muted rounded-lg px-6 py-2.5">
-                <Settings className="h-4 w-4" />
-                Customize Widgets
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-lg">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-semibold">Customize Dashboard</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                {cards.map((card) => (
-                  <div key={card.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-r ${card.gradient} text-white`}>
-                        {card.icon}
-                      </div>
-                      <Label htmlFor={card.id} className="font-medium text-card-foreground">
-                        {card.title}
-                      </Label>
-                    </div>
-                    <Switch
-                      id={card.id}
-                      checked={card.enabled}
-                      onCheckedChange={() => toggleCard(card.id)}
-                    />
-                  </div>
-                ))}
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-950">
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full p-6">
+          <div className="max-w-7xl mx-auto h-full">
+            {/* Header */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    AI Dashboard
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Intelligent insights and smart suggestions for your calendar
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={onOpenCommandSearch}
+                    variant="outline" 
+                    className="gap-2 rounded-lg"
+                  >
+                    <Search className="h-4 w-4" />
+                    Quick Search
+                  </Button>
+                  <Button 
+                    onClick={onCreateNew}
+                    className="gap-2 rounded-lg"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Create Event
+                  </Button>
+                </div>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
 
-        <DndContext 
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext items={enabledCards.map(card => card.id)}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {enabledCards.map((card) => (
-                <DashboardCard key={card.id} card={card}>
-                  {renderCardContent(card)}
-                </DashboardCard>
-              ))}
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Events</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{events.length}</p>
+                      </div>
+                      <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                        <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">This Week</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{thisWeekEvents.length}</p>
+                      </div>
+                      <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                        <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Categories</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{categories.length}</p>
+                      </div>
+                      <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                        <Target className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">AI Suggestions</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{suggestedEvents.length}</p>
+                      </div>
+                      <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+                        <Zap className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </SortableContext>
-        </DndContext>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-320px)]">
+              {/* AI Suggested Events */}
+              <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                    <Zap className="h-5 w-5 text-yellow-500" />
+                    AI Suggested Events
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[400px] px-6">
+                    <div className="space-y-3 pb-6">
+                      {suggestedEvents.map((suggestedEvent) => {
+                        const category = categories.find(c => c.id === suggestedEvent.category);
+                        return (
+                          <div
+                            key={suggestedEvent.id}
+                            className="group p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-move transition-all duration-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 hover:scale-[1.02] bg-gray-50 dark:bg-gray-800"
+                            draggable={true}
+                            onDragStart={(e) => handleDragStart(e, suggestedEvent)}
+                            onDragEnd={handleDragEnd}
+                            style={{
+                              borderLeftColor: category?.color,
+                              borderLeftWidth: '4px'
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <GripVertical className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                                  {suggestedEvent.title}
+                                </h4>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
+                                  {suggestedEvent.description}
+                                </p>
+                                <div className="flex items-center gap-3 mt-2">
+                                  <Badge variant="secondary" className="text-xs rounded-md">
+                                    {suggestedEvent.duration}h
+                                  </Badge>
+                                  {suggestedEvent.defaultAttendees && (
+                                    <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                                      <Users className="h-3 w-3" />
+                                      {suggestedEvent.defaultAttendees}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              {/* Weekly Analytics */}
+              <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                    <Activity className="h-5 w-5 text-blue-500" />
+                    Weekly Analytics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <WeeklyBarChart events={events} />
+                </CardContent>
+              </Card>
+
+              {/* Recent Events */}
+              <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                    <Calendar className="h-5 w-5 text-green-500" />
+                    Upcoming Events
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[400px] px-6">
+                    <div className="space-y-3 pb-6">
+                      {upcomingEvents.slice(0, 8).map((event) => {
+                        const category = categories.find(c => c.id === event.category);
+                        return (
+                          <div
+                            key={event.id}
+                            className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 bg-gray-50 dark:bg-gray-800"
+                            onClick={() => onEventClick(event)}
+                            style={{
+                              borderLeftColor: category?.color,
+                              borderLeftWidth: '4px'
+                            }}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                                  {event.title}
+                                </h4>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-gray-600 dark:text-gray-400">
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {format(parseISO(event.start), 'MMM d, h:mm a')}
+                                  </div>
+                                  {event.attendees && (
+                                    <div className="flex items-center gap-1">
+                                      <Users className="h-3 w-3" />
+                                      {event.attendees}
+                                    </div>
+                                  )}
+                                </div>
+                                {event.location && (
+                                  <div className="flex items-center gap-1 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    <MapPin className="h-3 w-3" />
+                                    <span className="truncate">{event.location}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

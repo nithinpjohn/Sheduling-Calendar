@@ -14,8 +14,11 @@ import { ProfilePage } from './ProfilePage';
 import { SettingsPage } from './SettingsPage';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, BarChart3 } from 'lucide-react';
+import { CalendarIcon, BarChart3, PanelLeftClose, PanelLeftOpen, Settings } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
 
 export interface CalendarEvent {
   id: string;
@@ -193,6 +196,7 @@ export const CalendarApp: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'calendar' | 'profile' | 'settings'>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [containerWidth, setContainerWidth] = useState([90]);
   const { toast } = useToast();
   const calendarRef = useRef<FullCalendar>(null);
 
@@ -423,75 +427,83 @@ export const CalendarApp: React.FC = () => {
     }
 
     return (
-      <div className="h-full bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView={currentView}
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: ''
-          }}
-          events={calendarEvents}
-          dateClick={handleDateClick}
-          select={handleDateSelect}
-          eventClick={handleEventClick}
-          eventDrop={handleEventDrop}
-          eventResize={handleEventResize}
-          editable={true}
-          droppable={true}
-          selectable={true}
-          selectMirror={true}
-          height="100%"
-          eventDisplay="block"
-          dayMaxEvents={true}
-          weekends={true}
-          slotMinTime="00:00:00"
-          slotMaxTime="24:00:00"
-          slotDuration="01:00:00"
-          slotLabelInterval="01:00:00"
-          nowIndicator={true}
-          eventResizableFromStart={true}
-          eventStartEditable={true}
-          eventDurationEditable={true}
-          allDaySlot={false}
-          views={{
-            dayGridMonth: {
-              dayMaxEventRows: 3
-            },
-            timeGridWeek: {
-              slotLabelFormat: {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
+      <div className="h-full bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {currentView === 'dayGridMonth' && 'Month View'}
+            {currentView === 'timeGridWeek' && 'Week View'}
+            {currentView === 'timeGridDay' && 'Day View'}
+          </h2>
+        </div>
+        <div className="p-6">
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView={currentView}
+            headerToolbar={{
+              left: 'prev,next today',
+              center: 'title',
+              right: ''
+            }}
+            events={calendarEvents}
+            dateClick={handleDateClick}
+            select={handleDateSelect}
+            eventClick={handleEventClick}
+            eventDrop={handleEventDrop}
+            eventResize={handleEventResize}
+            editable={true}
+            droppable={true}
+            selectable={true}
+            selectMirror={true}
+            height="600px"
+            eventDisplay="block"
+            dayMaxEvents={true}
+            weekends={true}
+            slotMinTime="00:00:00"
+            slotMaxTime="24:00:00"
+            slotDuration="01:00:00"
+            slotLabelInterval="01:00:00"
+            nowIndicator={true}
+            eventResizableFromStart={true}
+            eventStartEditable={true}
+            eventDurationEditable={true}
+            allDaySlot={false}
+            views={{
+              dayGridMonth: {
+                dayMaxEventRows: 3
               },
-              allDaySlot: false
-            },
-            timeGridDay: {
-              slotLabelFormat: {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
+              timeGridWeek: {
+                slotLabelFormat: {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false
+                },
+                allDaySlot: false
               },
-              allDaySlot: false
-            }
-          }}
-          drop={(info) => {
-            try {
-              // Get the data from the dragged element
-              const draggedData = info.draggedEl.getAttribute('data-suggested-event');
-              if (draggedData) {
-                const parsed = JSON.parse(draggedData);
-                if (parsed.type === 'suggested-event' && parsed.data) {
-                  handleSuggestedEventDrop(parsed.data, info.date);
-                }
+              timeGridDay: {
+                slotLabelFormat: {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false
+                },
+                allDaySlot: false
               }
-            } catch (error) {
-              console.error('Error processing dropped event:', error);
-            }
-          }}
-        />
+            }}
+            drop={(info) => {
+              try {
+                const draggedData = info.draggedEl.getAttribute('data-suggested-event');
+                if (draggedData) {
+                  const parsed = JSON.parse(draggedData);
+                  if (parsed.type === 'suggested-event' && parsed.data) {
+                    handleSuggestedEventDrop(parsed.data, info.date);
+                  }
+                }
+              } catch (error) {
+                console.error('Error processing dropped event:', error);
+              }
+            }}
+          />
+        </div>
       </div>
     );
   };
@@ -513,14 +525,15 @@ export const CalendarApp: React.FC = () => {
       case 'calendar':
         return (
           <div className="h-full flex flex-col">
-            <div className="border-b bg-white dark:bg-slate-800 p-4 rounded-t-lg">
+            <div className="border-b bg-white dark:bg-gray-900 p-4 rounded-t-xl border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Calendar View</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Calendar View</h2>
                 <div className="flex items-center space-x-2">
                   <Button
                     variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handleViewChange('dayGridMonth')}
+                    className="rounded-lg"
                   >
                     Month
                   </Button>
@@ -528,6 +541,7 @@ export const CalendarApp: React.FC = () => {
                     variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handleViewChange('timeGridWeek')}
+                    className="rounded-lg"
                   >
                     Week
                   </Button>
@@ -535,6 +549,7 @@ export const CalendarApp: React.FC = () => {
                     variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handleViewChange('timeGridDay')}
+                    className="rounded-lg"
                   >
                     Day
                   </Button>
@@ -542,6 +557,7 @@ export const CalendarApp: React.FC = () => {
                     variant={currentView === 'gantt' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handleViewChange('gantt')}
+                    className="rounded-lg"
                   >
                     Gantt
                   </Button>
@@ -579,7 +595,7 @@ export const CalendarApp: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-900 w-full">
+      <div className="flex flex-col h-screen bg-slate-50 dark:bg-gray-950 w-full">
         <TopMenuBar 
           onSearch={() => setIsCommandOpen(true)}
           isLoggedIn={isLoggedIn}
@@ -590,48 +606,57 @@ export const CalendarApp: React.FC = () => {
         />
         
         <div className="flex flex-1 overflow-hidden">
-          <CalendarSidebar
-            events={events}
-            categories={categories}
-            setCategories={setCategories}
-            selectedCategories={selectedCategories}
-            setSelectedCategories={setSelectedCategories}
-            onEventClick={(event) => {
-              handleProtectedAction(() => {
-                setSelectedEvent(event);
-                setIsCreating(false);
+          {!isSidebarCollapsed && (
+            <CalendarSidebar
+              events={events}
+              categories={categories}
+              setCategories={setCategories}
+              selectedCategories={selectedCategories}
+              setSelectedCategories={setSelectedCategories}
+              onEventClick={(event) => {
+                handleProtectedAction(() => {
+                  setSelectedEvent(event);
+                  setIsCreating(false);
+                  setIsModalOpen(true);
+                });
+              }}
+              onOpenCommandSearch={() => setIsCommandOpen(true)}
+              onCreateNew={() => handleProtectedAction(() => {
+                setSelectedDate(new Date().toISOString().split('T')[0]);
+                setSelectedEndDate(new Date().toISOString().split('T')[0]);
+                setIsCreating(true);
+                setSelectedEvent(null);
                 setIsModalOpen(true);
-              });
-            }}
-            onOpenCommandSearch={() => setIsCommandOpen(true)}
-            onCreateNew={() => handleProtectedAction(() => {
-              setSelectedDate(new Date().toISOString().split('T')[0]);
-              setSelectedEndDate(new Date().toISOString().split('T')[0]);
-              setIsCreating(true);
-              setSelectedEvent(null);
-              setIsModalOpen(true);
-            })}
-            suggestedEvents={suggestedEvents}
-            onSuggestedEventDrop={handleSuggestedEventDrop}
-            isCollapsed={isSidebarCollapsed}
-          />
+              })}
+              suggestedEvents={suggestedEvents}
+              onSuggestedEventDrop={handleSuggestedEventDrop}
+              isCollapsed={isSidebarCollapsed}
+            />
+          )}
           
-          <div className="flex-1 flex flex-col">
-            <div className="border-b bg-white dark:bg-slate-800 p-4">
+          <div 
+            className="flex-1 flex flex-col transition-all duration-300"
+            style={{ maxWidth: `${containerWidth[0]}%` }}
+          >
+            <div className="border-b bg-white dark:bg-gray-900 p-4 border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                    className="p-2 hover:bg-muted rounded-lg"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
                   >
-                    <BarChart3 className="h-4 w-4" />
+                    {isSidebarCollapsed ? (
+                      <PanelLeftOpen className="h-4 w-4" />
+                    ) : (
+                      <PanelLeftClose className="h-4 w-4" />
+                    )}
                   </Button>
                   <Button
                     variant={currentPage === 'dashboard' ? "default" : "outline"}
                     onClick={() => setCurrentPage('dashboard')}
-                    className="gap-2"
+                    className="gap-2 rounded-lg"
                   >
                     <BarChart3 className="h-4 w-4" />
                     AI Dashboard
@@ -639,11 +664,37 @@ export const CalendarApp: React.FC = () => {
                   <Button
                     variant={currentPage === 'calendar' ? "default" : "outline"}
                     onClick={() => setCurrentPage('calendar')}
-                    className="gap-2"
+                    className="gap-2 rounded-lg"
                   >
                     <CalendarIcon className="h-4 w-4" />
                     Calendar
                   </Button>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2 rounded-lg">
+                        <Settings className="h-4 w-4" />
+                        Layout
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 rounded-lg">
+                      <div className="space-y-4">
+                        <h4 className="font-medium text-gray-900 dark:text-white">Adjust Container Width</h4>
+                        <div className="space-y-2">
+                          <Label className="text-sm text-gray-600 dark:text-gray-400">
+                            Width: {containerWidth[0]}%
+                          </Label>
+                          <Slider
+                            value={containerWidth}
+                            onValueChange={setContainerWidth}
+                            max={100}
+                            min={50}
+                            step={5}
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             </div>
