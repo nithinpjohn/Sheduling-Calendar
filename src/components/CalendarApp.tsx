@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -573,8 +572,6 @@ export const CalendarApp: React.FC = () => {
             selectedCategories={selectedCategories}
             setSelectedCategories={setSelectedCategories}
             setCategories={setCategories}
-            isSidebarCollapsed={isSidebarCollapsed}
-            setIsSidebarCollapsed={setIsSidebarCollapsed}
           />
         );
     }
