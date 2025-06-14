@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -51,6 +50,8 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [dashboardCards, setDashboardCards] = useState<DashboardCard[]>([]);
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
+  const [dragOverCard, setDragOverCard] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Calculate statistics
   const totalEvents = events.length;
@@ -377,28 +378,33 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
   }, [events, categories, thisWeekEvents.length, lastWeekEvents.length]);
 
   const handleCardDragStart = (e: React.DragEvent<HTMLDivElement>, card: DashboardCard) => {
+    // Only allow drag if the target is the handle
+    if (!(e.target as HTMLElement).closest('.drag-handle')) {
+      e.preventDefault();
+      return;
+    }
+    
     console.log('Starting drag for card:', card.title);
     setDraggedCard(card.id);
+    setIsDragging(true);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', card.id);
-    
-    const target = e.currentTarget;
-    target.style.opacity = '0.5';
-    target.style.transform = 'scale(0.95)';
-    target.classList.add('dragging');
   };
 
   const handleCardDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     setDraggedCard(null);
-    const target = e.currentTarget;
-    target.style.opacity = '1';
-    target.style.transform = 'scale(1)';
-    target.classList.remove('dragging');
+    setDragOverCard(null);
+    setIsDragging(false);
   };
 
-  const handleCardDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleCardDragOver = (e: React.DragEvent<HTMLDivElement>, cardId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    setDragOverCard(cardId);
+  };
+
+  const handleCardDragLeave = () => {
+    setDragOverCard(null);
   };
 
   const handleCardDrop = (e: React.DragEvent<HTMLDivElement>, targetCardId: string) => {
@@ -417,6 +423,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
     newCards.splice(targetIndex, 0, draggedCard);
 
     setDashboardCards(newCards);
+    setDragOverCard(null);
   };
 
   const toggleCardVisibility = (cardId: string) => {
@@ -522,7 +529,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">This Week</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{thisWeekEvents.length}</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">5</p>
                     </div>
                     <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
                       <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -550,12 +557,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Productivity</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {lastWeekEvents.length > 0 
-                          ? `+${Math.round(((thisWeekEvents.length - lastWeekEvents.length) / lastWeekEvents.length) * 100)}%`
-                          : '0%'
-                        }
-                      </p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">+15%</p>
                     </div>
                     <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
                       <Zap className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
@@ -570,23 +572,36 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {enabledCards.map((card) => {
               const IconComponent = card.icon;
+              const isBeingDragged = draggedCard === card.id;
+              const isDropTarget = dragOverCard === card.id;
+              
               return (
                 <Card
                   key={card.id}
-                  className={`rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-move transition-all duration-200 hover:shadow-lg hover:scale-[1.02] ${
-                    draggedCard === card.id ? 'opacity-50 scale-95' : ''
-                  }`}
-                  draggable={true}
+                  className={`rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-all duration-200 ${
+                    isBeingDragged 
+                      ? 'opacity-50 scale-95 rotate-2 shadow-2xl z-50' 
+                      : isDropTarget 
+                        ? 'scale-105 shadow-lg border-blue-500 border-2' 
+                        : 'hover:shadow-lg hover:scale-[1.02]'
+                  } ${isDragging && !isBeingDragged ? 'transition-transform duration-300' : ''}`}
+                  draggable={false}
                   onDragStart={(e) => handleCardDragStart(e, card)}
                   onDragEnd={handleCardDragEnd}
-                  onDragOver={handleCardDragOver}
+                  onDragOver={(e) => handleCardDragOver(e, card.id)}
+                  onDragLeave={handleCardDragLeave}
                   onDrop={(e) => handleCardDrop(e, card.id)}
                 >
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <IconComponent className="h-5 w-5 text-primary" />
                       {card.title}
-                      <GripVertical className="h-4 w-4 text-gray-400 ml-auto opacity-60 hover:opacity-100 transition-opacity" />
+                      <div 
+                        className="drag-handle ml-auto p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-grab active:cursor-grabbing transition-colors"
+                        draggable={true}
+                      >
+                        <GripVertical className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                      </div>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">

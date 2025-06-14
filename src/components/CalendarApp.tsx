@@ -423,7 +423,14 @@ export const CalendarApp: React.FC = () => {
 
   const renderCalendarView = () => {
     if (currentView === 'gantt') {
-      return <GanttView events={calendarEvents} categories={categories} />;
+      return (
+        <GanttView 
+          events={calendarEvents} 
+          categories={categories} 
+          currentView={currentView}
+          onViewChange={handleViewChange}
+        />
+      );
     }
 
     return (
