@@ -13,7 +13,6 @@ import { Label } from '@/components/ui/label';
 import { ColorPicker } from './ColorPicker';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Sidebar, SidebarContent } from '@/components/ui/sidebar';
 
 interface CalendarSidebarProps {
   events: CalendarEvent[];
@@ -26,6 +25,7 @@ interface CalendarSidebarProps {
   onCreateNew: () => void;
   suggestedEvents: SuggestedEvent[];
   onSuggestedEventDrop: (eventData: SuggestedEvent, date: Date) => void;
+  isCollapsed: boolean;
 }
 
 export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
@@ -39,6 +39,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   onCreateNew,
   suggestedEvents,
   onSuggestedEventDrop,
+  isCollapsed,
 }) => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
@@ -107,7 +108,6 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     console.log('Drag started for:', suggestedEvent.title);
     e.dataTransfer.effectAllowed = 'copy';
     
-    // Set the data in multiple formats for better compatibility
     const dragData = {
       type: 'suggested-event',
       data: suggestedEvent
@@ -116,7 +116,6 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
     e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
     
-    // Add visual feedback
     const target = e.currentTarget;
     target.classList.add('dragging');
     target.style.opacity = '0.5';
@@ -133,7 +132,6 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     setCurrentSuggestions(safeSuggestedEvents);
   }, [safeSuggestedEvents]);
 
-  // Safely get suggestions to render - ensure we ALWAYS have a valid array and filter out any undefined items
   const suggestionsToRender = (Array.isArray(currentSuggestions) && currentSuggestions.length > 0 
     ? currentSuggestions 
     : Array.isArray(safeSuggestedEvents) 
@@ -141,10 +139,14 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
       : [])
     .filter(item => item != null && typeof item === 'object' && item.id && item.title);
 
+  if (isCollapsed) {
+    return null;
+  }
+
   return (
-    <Sidebar>
-      <SidebarContent>
-        <div className="w-80 bg-card p-6 overflow-y-auto h-full">
+    <div className="w-80 bg-card border-r border-border flex-shrink-0 h-full overflow-hidden">
+      <div className="h-full flex flex-col">
+        <div className="p-6 flex-1 overflow-y-auto">
           <div className="space-y-6">
             {/* Create Event Button */}
             <Button onClick={onCreateNew} className="w-full gap-2 rounded-lg">
@@ -369,7 +371,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
             </div>
           </div>
         </div>
-      </SidebarContent>
-    </Sidebar>
+      </div>
+    </div>
   );
 };

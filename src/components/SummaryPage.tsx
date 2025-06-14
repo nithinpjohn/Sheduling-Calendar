@@ -11,9 +11,8 @@ import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tool
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Settings, Users, TrendingUp, Calendar, Clock, MapPin, Activity, BarChart3, PieChart as PieChartIcon, Menu } from 'lucide-react';
+import { GripVertical, Settings, Users, TrendingUp, Calendar, Clock, MapPin, Activity, BarChart3, PieChart as PieChartIcon, Menu, PanelLeft } from 'lucide-react';
 import { WeeklyBarChart } from './WeeklyBarChart';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { CalendarSidebar } from './CalendarSidebar';
 
 interface SummaryPageProps {
@@ -88,15 +87,21 @@ interface SortableCardProps {
 }
 
 const DashboardCard: React.FC<SortableCardProps> = ({ card, children }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: card.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id });
   
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
   };
   
   return (
-    <Card ref={setNodeRef} style={style} className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-card backdrop-blur-sm rounded-lg">
+    <Card 
+      ref={setNodeRef} 
+      style={style} 
+      className={`h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-card backdrop-blur-sm rounded-lg ${isDragging ? 'shadow-2xl' : ''}`}
+    >
       <CardHeader className="p-5 pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -105,7 +110,11 @@ const DashboardCard: React.FC<SortableCardProps> = ({ card, children }) => {
             </div>
             <CardTitle className="text-lg font-semibold text-card-foreground">{card.title}</CardTitle>
           </div>
-          <div {...attributes} {...listeners} className="cursor-grab opacity-50 hover:opacity-100 transition-opacity">
+          <div 
+            {...attributes} 
+            {...listeners} 
+            className="cursor-grab opacity-50 hover:opacity-100 transition-opacity touch-none"
+          >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>
@@ -129,8 +138,14 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
 }) => {
   const [cards, setCards] = useState(defaultCards);
   const [showCustomize, setShowCustomize] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -405,83 +420,89 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
   const enabledCards = cards.filter(card => card.enabled);
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <CalendarSidebar
-          events={events}
-          categories={categories}
-          setCategories={setCategories}
-          selectedCategories={selectedCategories}
-          setSelectedCategories={setSelectedCategories}
-          onEventClick={onEventClick}
-          onOpenCommandSearch={onOpenCommandSearch}
-          onCreateNew={onCreateNew}
-          suggestedEvents={suggestedEvents}
-          onSuggestedEventDrop={onSuggestedEventDrop}
-        />
-        
-        <div className="flex-1 h-full overflow-auto bg-gradient-to-br from-background via-background to-muted/20">
-          <div className="p-8">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <SidebarTrigger />
-                <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-card-foreground to-muted-foreground bg-clip-text text-transparent">AI Dashboard</h1>
-                  <p className="text-muted-foreground mt-2 text-lg">Intelligent insights and analytics for your calendar events</p>
-                </div>
+    <div className="min-h-screen flex w-full">
+      <CalendarSidebar
+        events={events}
+        categories={categories}
+        setCategories={setCategories}
+        selectedCategories={selectedCategories}
+        setSelectedCategories={setSelectedCategories}
+        onEventClick={onEventClick}
+        onOpenCommandSearch={onOpenCommandSearch}
+        onCreateNew={onCreateNew}
+        suggestedEvents={suggestedEvents}
+        onSuggestedEventDrop={onSuggestedEventDrop}
+        isCollapsed={sidebarCollapsed}
+      />
+      
+      <div className="flex-1 h-screen overflow-auto bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="p-2 hover:bg-muted rounded-lg"
+              >
+                <PanelLeft className="h-4 w-4" />
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-card-foreground to-muted-foreground bg-clip-text text-transparent">AI Dashboard</h1>
+                <p className="text-muted-foreground mt-2 text-lg">Intelligent insights and analytics for your calendar events</p>
               </div>
-              <Dialog open={showCustomize} onOpenChange={setShowCustomize}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="gap-2 border-border hover:bg-muted rounded-lg px-6 py-2.5">
-                    <Settings className="h-4 w-4" />
-                    Customize Widgets
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="rounded-lg">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold">Customize Dashboard</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    {cards.map((card) => (
-                      <div key={card.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted">
-                        <div className="flex items-center space-x-3">
-                          <div className={`p-2 rounded-lg bg-gradient-to-r ${card.gradient} text-white`}>
-                            {card.icon}
-                          </div>
-                          <Label htmlFor={card.id} className="font-medium text-card-foreground">
-                            {card.title}
-                          </Label>
-                        </div>
-                        <Switch
-                          id={card.id}
-                          checked={card.enabled}
-                          onCheckedChange={() => toggleCard(card.id)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </DialogContent>
-              </Dialog>
             </div>
-
-            <DndContext 
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext items={enabledCards.map(card => card.id)}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {enabledCards.map((card) => (
-                    <DashboardCard key={card.id} card={card}>
-                      {renderCardContent(card)}
-                    </DashboardCard>
+            <Dialog open={showCustomize} onOpenChange={setShowCustomize}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2 border-border hover:bg-muted rounded-lg px-6 py-2.5">
+                  <Settings className="h-4 w-4" />
+                  Customize Widgets
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="rounded-lg">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-semibold">Customize Dashboard</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {cards.map((card) => (
+                    <div key={card.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted">
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-2 rounded-lg bg-gradient-to-r ${card.gradient} text-white`}>
+                          {card.icon}
+                        </div>
+                        <Label htmlFor={card.id} className="font-medium text-card-foreground">
+                          {card.title}
+                        </Label>
+                      </div>
+                      <Switch
+                        id={card.id}
+                        checked={card.enabled}
+                        onCheckedChange={() => toggleCard(card.id)}
+                      />
+                    </div>
                   ))}
                 </div>
-              </SortableContext>
-            </DndContext>
+              </DialogContent>
+            </Dialog>
           </div>
+
+          <DndContext 
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={enabledCards.map(card => card.id)}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {enabledCards.map((card) => (
+                  <DashboardCard key={card.id} card={card}>
+                    {renderCardContent(card)}
+                  </DashboardCard>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
-    </SidebarProvider>
+    </div>
   );
 };
