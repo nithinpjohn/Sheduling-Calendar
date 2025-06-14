@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { Plus, Filter, Calendar, BarChart3, Users, Lightbulb, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { CalendarEvent, EventCategory, SuggestedEvent } from './CalendarApp';
 import { format, parseISO, isToday, isTomorrow, isFuture } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
