@@ -323,6 +323,42 @@ export const CalendarApp: React.FC = () => {
     borderColor: categories.find(c => c.id === event.category)?.color,
   }));
 
+  const renderCalendarView = () => {
+    if (currentView === 'gantt') {
+      return <GanttView events={calendarEvents} categories={categories} />;
+    }
+
+    return (
+      <FullCalendar
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        initialView={currentView}
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: ''
+        }}
+        events={calendarEvents}
+        dateClick={handleDateClick}
+        eventClick={handleEventClick}
+        eventDrop={handleEventDrop}
+        eventResize={handleEventResize}
+        editable={true}
+        droppable={true}
+        selectable={true}
+        selectMirror={true}
+        height="100%"
+        eventDisplay="block"
+        dayMaxEvents={true}
+        weekends={true}
+        views={{
+          dayGridMonth: {
+            dayMaxEventRows: 3
+          }
+        }}
+      />
+    );
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background">
       <TopMenuBar onSearch={openCommandSearch} />
@@ -417,36 +453,8 @@ export const CalendarApp: React.FC = () => {
                     setIsModalOpen(true);
                   }}
                 />
-              ) : currentView === 'gantt' ? (
-                <GanttView events={calendarEvents} categories={categories} />
               ) : (
-                <FullCalendar
-                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                  initialView={currentView}
-                  headerToolbar={{
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: ''
-                  }}
-                  events={calendarEvents}
-                  dateClick={handleDateClick}
-                  eventClick={handleEventClick}
-                  eventDrop={handleEventDrop}
-                  eventResize={handleEventResize}
-                  editable={true}
-                  droppable={true}
-                  selectable={true}
-                  selectMirror={true}
-                  height="100%"
-                  eventDisplay="block"
-                  dayMaxEvents={true}
-                  weekends={true}
-                  views={{
-                    dayGridMonth: {
-                      dayMaxEventRows: 3
-                    }
-                  }}
-                />
+                renderCalendarView()
               )}
             </div>
           </div>
