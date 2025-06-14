@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { CalendarEvent, EventCategory, SuggestedEvent } from './CalendarApp';
 import { WeeklyBarChart } from './WeeklyBarChart';
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays, isSameDay, subMonths, eachMonthOfInterval, startOfMonth, endOfMonth } from 'date-fns';
-import { Calendar, Clock, Users, MapPin, Plus, Search, TrendingUp, Activity, Target, Zap, GripVertical } from 'lucide-react';
+import { Calendar, Clock, Users, MapPin, Plus, Search, TrendingUp, Activity, Target, Zap, GripVertical, Shuffle, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Line, PieChart, Pie, Cell } from 'recharts';
@@ -46,6 +46,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
   setCategories,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [dashboardCards, setDashboardCards] = useState<DashboardCard[]>([]);
 
   // Calculate statistics
   const totalEvents = events.length;
@@ -94,6 +95,142 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
     };
   });
 
+  // Initialize dashboard cards
+  useEffect(() => {
+    const cards: DashboardCard[] = [
+      {
+        id: 'total-events',
+        title: 'Total Events',
+        icon: Calendar,
+        content: (
+          <div className="text-center">
+            <div className="text-3xl font-bold text-primary mb-2">{events.length}</div>
+            <p className="text-sm text-muted-foreground">All time events</p>
+          </div>
+        ),
+      },
+      {
+        id: 'weekly-chart',
+        title: 'Weekly Analytics',
+        icon: BarChart3,
+        content: <WeeklyBarChart events={events} />,
+      },
+      {
+        id: 'category-distribution',
+        title: 'Category Distribution',
+        icon: PieChartIcon,
+        content: (
+          <ResponsiveContainer width="100%" height={200}>
+            <PieChart>
+              <Pie
+                data={categoryStats}
+                cx="50%"
+                cy="50%"
+                innerRadius={40}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="count"
+              >
+                {categoryStats.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        ),
+      },
+      {
+        id: 'monthly-trend',
+        title: 'Monthly Trend',
+        icon: TrendingUp,
+        content: (
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="events"
+                stroke="#3B82F6"
+                strokeWidth={2}
+                dot={{ fill: '#3B82F6' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ),
+      },
+      {
+        id: 'upcoming-events',
+        title: 'Upcoming Events',
+        icon: Clock,
+        content: (
+          <div className="space-y-3 max-h-48 overflow-y-auto">
+            {upcomingEvents.slice(0, 5).map((event) => {
+              const category = categories.find(c => c.id === event.category);
+              return (
+                <div
+                  key={event.id}
+                  className="flex items-center gap-3 p-2 rounded-lg border cursor-pointer hover:bg-accent"
+                  onClick={() => onEventClick(event)}
+                  style={{
+                    borderLeftColor: category?.color,
+                    borderLeftWidth: '4px'
+                  }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-sm truncate">{event.title}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      {format(parseISO(event.start), 'MMM d, h:mm a')}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ),
+      },
+      {
+        id: 'quick-stats',
+        title: 'Quick Stats',
+        icon: Activity,
+        content: (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{thisWeekEvents.length}</div>
+              <div className="text-xs text-muted-foreground">This Week</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">{categories.length}</div>
+              <div className="text-xs text-muted-foreground">Categories</div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'ai-suggestions',
+        title: 'AI Suggestions',
+        icon: Zap,
+        content: (
+          <div className="text-center">
+            <div className="text-3xl font-bold text-yellow-600 mb-2">{suggestedEvents.length}</div>
+            <p className="text-sm text-muted-foreground">Smart suggestions available</p>
+            <Button 
+              size="sm" 
+              className="mt-2"
+              onClick={() => {/* Navigate to suggestions */}}
+            >
+              View All
+            </Button>
+          </div>
+        ),
+      },
+    ];
+    setDashboardCards(cards);
+  }, [events, categories, suggestedEvents, thisWeekEvents.length]);
+
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, suggestedEvent: SuggestedEvent) => {
     console.log('Starting drag for:', suggestedEvent.title);
     
@@ -122,6 +259,26 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
     target.style.opacity = '1';
     target.style.transform = 'scale(1)';
     target.classList.remove('dragging');
+  };
+
+  const handleCardDragStart = (e: React.DragEvent<HTMLDivElement>, card: DashboardCard) => {
+    console.log('Starting drag for card:', card.title);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', card.id);
+    
+    const target = e.currentTarget;
+    target.style.opacity = '0.6';
+    target.classList.add('dragging');
+  };
+
+  const handleCardDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    target.style.opacity = '1';
+    target.classList.remove('dragging');
+  };
+
+  const shuffleCards = () => {
+    setDashboardCards(prev => [...prev].sort(() => Math.random() - 0.5));
   };
 
   return (
@@ -215,6 +372,49 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </div>
+
+          {/* AI Insight Cards Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                AI Insight Cards
+              </h2>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={shuffleCards}
+                className="rounded-lg"
+              >
+                <Shuffle className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {dashboardCards.map((card) => {
+                const IconComponent = card.icon;
+                return (
+                  <Card
+                    key={card.id}
+                    className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-move transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
+                    draggable={true}
+                    onDragStart={(e) => handleCardDragStart(e, card)}
+                    onDragEnd={handleCardDragEnd}
+                  >
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-sm">
+                        <IconComponent className="h-4 w-4 text-primary" />
+                        {card.title}
+                        <GripVertical className="h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      {card.content}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
 
