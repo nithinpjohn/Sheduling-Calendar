@@ -8,10 +8,12 @@ import { Label } from '@/components/ui/label';
 import { CalendarEvent, EventCategory, SuggestedEvent } from './CalendarApp';
 import { WeeklyBarChart } from './WeeklyBarChart';
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays, isSameDay, subMonths, eachMonthOfInterval, startOfMonth, endOfMonth } from 'date-fns';
-import { Calendar, Clock, Users, MapPin, Plus, Search, TrendingUp, Activity, Target, Zap, GripVertical, Shuffle, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
+import { Calendar, Clock, Users, MapPin, Plus, Search, TrendingUp, Activity, Target, Zap, GripVertical, Settings, BarChart3, PieChart as PieChartIcon, Eye, EyeOff } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Line, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Line, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Switch } from '@/components/ui/switch';
 
 interface SummaryPageProps {
   events: CalendarEvent[];
@@ -31,6 +33,7 @@ interface DashboardCard {
   title: string;
   icon: React.ComponentType<any>;
   content?: React.ReactNode;
+  enabled: boolean;
 }
 
 export const SummaryPage: React.FC<SummaryPageProps> = ({
@@ -47,6 +50,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dashboardCards, setDashboardCards] = useState<DashboardCard[]>([]);
+  const [draggedCard, setDraggedCard] = useState<string | null>(null);
 
   // Calculate statistics
   const totalEvents = events.length;
@@ -59,6 +63,16 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
   const thisWeekEvents = events.filter(event => {
     const eventDate = new Date(event.start);
     return eventDate >= weekStart && eventDate <= weekEnd;
+  });
+
+  const lastWeekStart = new Date(weekStart);
+  lastWeekStart.setDate(weekStart.getDate() - 7);
+  const lastWeekEnd = new Date(weekEnd);
+  lastWeekEnd.setDate(weekEnd.getDate() - 7);
+  
+  const lastWeekEvents = events.filter(event => {
+    const eventDate = new Date(event.start);
+    return eventDate >= lastWeekStart && eventDate <= lastWeekEnd;
   });
 
   const categoryStats = categories.map(category => {
@@ -95,191 +109,327 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
     };
   });
 
+  const weeklyTrendData = [
+    { day: 'Mon', events: events.filter(e => new Date(e.start).getDay() === 1).length },
+    { day: 'Tue', events: events.filter(e => new Date(e.start).getDay() === 2).length },
+    { day: 'Wed', events: events.filter(e => new Date(e.start).getDay() === 3).length },
+    { day: 'Thu', events: events.filter(e => new Date(e.start).getDay() === 4).length },
+    { day: 'Fri', events: events.filter(e => new Date(e.start).getDay() === 5).length },
+    { day: 'Sat', events: events.filter(e => new Date(e.start).getDay() === 6).length },
+    { day: 'Sun', events: events.filter(e => new Date(e.start).getDay() === 0).length },
+  ];
+
   // Initialize dashboard cards
   useEffect(() => {
     const cards: DashboardCard[] = [
       {
-        id: 'total-events',
-        title: 'Total Events',
-        icon: Calendar,
+        id: 'events-overview',
+        title: 'Events Overview',
+        icon: Activity,
+        enabled: true,
         content: (
-          <div className="text-center">
-            <div className="text-3xl font-bold text-primary mb-2">{events.length}</div>
-            <p className="text-sm text-muted-foreground">All time events</p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{thisWeekEvents.length}</div>
+                <div className="text-sm text-muted-foreground">Today</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600">{thisWeekEvents.length}</div>
+                <div className="text-sm text-muted-foreground">This Week</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">{events.length}</div>
+                <div className="text-sm text-muted-foreground">This Month</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">9</div>
+                <div className="text-sm text-muted-foreground">Avg Attendees</div>
+              </div>
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm">Total Events</span>
+                <span className="font-medium">{events.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Total Attendees</span>
+                <span className="font-medium">26</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Events with Location</span>
+                <span className="font-medium">{events.filter(e => e.location).length}</span>
+              </div>
+            </div>
           </div>
         ),
       },
       {
-        id: 'weekly-chart',
-        title: 'Weekly Analytics',
-        icon: BarChart3,
-        content: <WeeklyBarChart events={events} />,
-      },
-      {
-        id: 'category-distribution',
-        title: 'Category Distribution',
-        icon: PieChartIcon,
-        content: (
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={categoryStats}
-                cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="count"
-              >
-                {categoryStats.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        ),
-      },
-      {
-        id: 'monthly-trend',
-        title: 'Monthly Trend',
-        icon: TrendingUp,
-        content: (
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="events"
-                stroke="#3B82F6"
-                strokeWidth={2}
-                dot={{ fill: '#3B82F6' }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        ),
-      },
-      {
-        id: 'upcoming-events',
-        title: 'Upcoming Events',
+        id: 'upcoming-meetings',
+        title: 'Upcoming Meetings',
         icon: Clock,
+        enabled: true,
         content: (
-          <div className="space-y-3 max-h-48 overflow-y-auto">
-            {upcomingEvents.slice(0, 5).map((event) => {
-              const category = categories.find(c => c.id === event.category);
-              return (
-                <div
-                  key={event.id}
-                  className="flex items-center gap-3 p-2 rounded-lg border cursor-pointer hover:bg-accent"
-                  onClick={() => onEventClick(event)}
-                  style={{
-                    borderLeftColor: category?.color,
-                    borderLeftWidth: '4px'
+          <div className="space-y-3">
+            {upcomingEvents.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground">No upcoming meetings</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {upcomingEvents.slice(0, 5).map((event) => {
+                  const category = categories.find(c => c.id === event.category);
+                  return (
+                    <div
+                      key={event.id}
+                      className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => onEventClick(event)}
+                      style={{
+                        borderLeftColor: category?.color,
+                        borderLeftWidth: '4px'
+                      }}
+                    >
+                      <h4 className="font-medium text-sm truncate">{event.title}</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {format(parseISO(event.start), 'MMM d, h:mm a')}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: 'monthly-trends',
+        title: 'Monthly Trends',
+        icon: TrendingUp,
+        enabled: true,
+        content: (
+          <div>
+            <div className="mb-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <BarChart3 className="h-4 w-4" />
+                <span>Events created per month (2025)</span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fontSize: 12 }}
+                  axisLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  axisLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '12px'
                   }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate">{event.title}</h4>
-                    <p className="text-xs text-muted-foreground">
-                      {format(parseISO(event.start), 'MMM d, h:mm a')}
-                    </p>
+                />
+                <Line
+                  type="monotone"
+                  dataKey="events"
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, fill: '#3B82F6' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        ),
+      },
+      {
+        id: 'weekly-activity',
+        title: 'Weekly Activity',
+        icon: BarChart3,
+        enabled: true,
+        content: (
+          <div>
+            <div className="mb-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <BarChart3 className="h-4 w-4" />
+                <span>Events by day of week</span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={weeklyTrendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis 
+                  dataKey="day" 
+                  tick={{ fontSize: 12 }}
+                  axisLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  axisLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }}
+                />
+                <Bar 
+                  dataKey="events" 
+                  fill="#3B82F6" 
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ),
+      },
+      {
+        id: 'category-analytics',
+        title: 'Category Analytics',
+        icon: PieChartIcon,
+        enabled: true,
+        content: (
+          <div>
+            <div className="mb-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <Target className="h-4 w-4" />
+                <span>Performance by category</span>
+              </div>
+            </div>
+            {categoryStats.length > 0 ? (
+              <div className="space-y-3">
+                {categoryStats.slice(0, 3).map((stat, index) => (
+                  <div key={stat.category} className="flex items-center gap-3">
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: stat.color }}
+                    />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{stat.category}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {stat.count} events ({Math.round((stat.count / events.length) * 100)}%)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div className="mt-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>{categoryStats.reduce((sum, stat) => sum + stat.count, 0)} total attendees</span>
+                    <Badge variant="secondary" className="ml-2">
+                      8 avg per event
+                    </Badge>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No category data available</p>
+            )}
           </div>
         ),
       },
       {
-        id: 'quick-stats',
-        title: 'Quick Stats',
-        icon: Activity,
-        content: (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{thisWeekEvents.length}</div>
-              <div className="text-xs text-muted-foreground">This Week</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{categories.length}</div>
-              <div className="text-xs text-muted-foreground">Categories</div>
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: 'ai-suggestions',
-        title: 'AI Suggestions',
+        id: 'productivity-insights',
+        title: 'Productivity Insights',
         icon: Zap,
+        enabled: true,
         content: (
-          <div className="text-center">
-            <div className="text-3xl font-bold text-yellow-600 mb-2">{suggestedEvents.length}</div>
-            <p className="text-sm text-muted-foreground">Smart suggestions available</p>
-            <Button 
-              size="sm" 
-              className="mt-2"
-              onClick={() => {/* Navigate to suggestions */}}
-            >
-              View All
-            </Button>
+          <div>
+            <div className="mb-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <TrendingUp className="h-4 w-4" />
+                <span>Productivity metrics</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{thisWeekEvents.length}</div>
+                <div className="text-sm text-muted-foreground">This Week</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600">
+                  {lastWeekEvents.length > 0 
+                    ? `${Math.round(((thisWeekEvents.length - lastWeekEvents.length) / lastWeekEvents.length) * 100)}%`
+                    : '0%'
+                  }
+                </div>
+                <div className="text-sm text-muted-foreground">vs Last Week</div>
+              </div>
+            </div>
           </div>
         ),
       },
     ];
     setDashboardCards(cards);
-  }, [events, categories, suggestedEvents, thisWeekEvents.length]);
+  }, [events, categories, thisWeekEvents.length, lastWeekEvents.length]);
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, suggestedEvent: SuggestedEvent) => {
-    console.log('Starting drag for:', suggestedEvent.title);
+  const handleCardDragStart = (e: React.DragEvent<HTMLDivElement>, card: DashboardCard) => {
+    console.log('Starting drag for card:', card.title);
+    setDraggedCard(card.id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', card.id);
     
-    e.dataTransfer.effectAllowed = 'copy';
-    e.dataTransfer.dropEffect = 'copy';
-    
-    const dragData = {
-      type: 'suggested-event',
-      data: suggestedEvent
-    };
-    
-    const dataString = JSON.stringify(dragData);
-    e.dataTransfer.setData('application/json', dataString);
-    e.dataTransfer.setData('text/plain', dataString);
-    
-    // Add visual feedback
     const target = e.currentTarget;
-    target.style.opacity = '0.6';
+    target.style.opacity = '0.5';
     target.style.transform = 'scale(0.95)';
     target.classList.add('dragging');
   };
 
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-    console.log('Ending drag');
+  const handleCardDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    setDraggedCard(null);
     const target = e.currentTarget;
     target.style.opacity = '1';
     target.style.transform = 'scale(1)';
     target.classList.remove('dragging');
   };
 
-  const handleCardDragStart = (e: React.DragEvent<HTMLDivElement>, card: DashboardCard) => {
-    console.log('Starting drag for card:', card.title);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', card.id);
+  const handleCardDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleCardDrop = (e: React.DragEvent<HTMLDivElement>, targetCardId: string) => {
+    e.preventDefault();
+    const draggedCardId = e.dataTransfer.getData('text/plain');
     
-    const target = e.currentTarget;
-    target.style.opacity = '0.6';
-    target.classList.add('dragging');
+    if (draggedCardId === targetCardId) return;
+
+    const draggedIndex = dashboardCards.findIndex(card => card.id === draggedCardId);
+    const targetIndex = dashboardCards.findIndex(card => card.id === targetCardId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    const newCards = [...dashboardCards];
+    const [draggedCard] = newCards.splice(draggedIndex, 1);
+    newCards.splice(targetIndex, 0, draggedCard);
+
+    setDashboardCards(newCards);
   };
 
-  const handleCardDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    target.style.opacity = '1';
-    target.classList.remove('dragging');
+  const toggleCardVisibility = (cardId: string) => {
+    setDashboardCards(prev => 
+      prev.map(card => 
+        card.id === cardId 
+          ? { ...card, enabled: !card.enabled }
+          : card
+      )
+    );
   };
 
-  const shuffleCards = () => {
-    setDashboardCards(prev => [...prev].sort(() => Math.random() - 0.5));
-  };
+  const enabledCards = dashboardCards.filter(card => card.enabled);
 
   return (
     <div className="h-full overflow-auto bg-gray-50 dark:bg-gray-950">
@@ -293,21 +443,57 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                   AI Dashboard
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Intelligent insights and smart suggestions for your calendar
+                  Intelligent insights and analytics for your calendar events
                 </p>
               </div>
               <div className="flex gap-3">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="gap-2">
+                      <Settings className="h-4 w-4" />
+                      Customize Widgets
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetHeader>
+                      <SheetTitle>Customize Dashboard</SheetTitle>
+                      <SheetDescription>
+                        Enable or disable dashboard cards and drag to reorder them.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-6 space-y-4">
+                      {dashboardCards.map((card) => {
+                        const IconComponent = card.icon;
+                        return (
+                          <div
+                            key={card.id}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <IconComponent className="h-4 w-4" />
+                              <span className="font-medium">{card.title}</span>
+                            </div>
+                            <Switch
+                              checked={card.enabled}
+                              onCheckedChange={() => toggleCardVisibility(card.id)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </SheetContent>
+                </Sheet>
                 <Button 
                   onClick={onOpenCommandSearch}
                   variant="outline" 
-                  className="gap-2 rounded-lg"
+                  className="gap-2"
                 >
                   <Search className="h-4 w-4" />
                   Quick Search
                 </Button>
                 <Button 
                   onClick={onCreateNew}
-                  className="gap-2 rounded-lg"
+                  className="gap-2"
                 >
                   <Plus className="h-4 w-4" />
                   Create Event
@@ -363,8 +549,13 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">AI Suggestions</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{suggestedEvents.length}</p>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Productivity</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {lastWeekEvents.length > 0 
+                          ? `+${Math.round(((thisWeekEvents.length - lastWeekEvents.length) / lastWeekEvents.length) * 100)}%`
+                          : '0%'
+                        }
+                      </p>
                     </div>
                     <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
                       <Zap className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
@@ -375,174 +566,35 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
             </div>
           </div>
 
-          {/* AI Insight Cards Section */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                AI Insight Cards
-              </h2>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={shuffleCards}
-                className="rounded-lg"
-              >
-                <Shuffle className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {dashboardCards.map((card) => {
-                const IconComponent = card.icon;
-                return (
-                  <Card
-                    key={card.id}
-                    className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-move transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
-                    draggable={true}
-                    onDragStart={(e) => handleCardDragStart(e, card)}
-                    onDragEnd={handleCardDragEnd}
-                  >
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-sm">
-                        <IconComponent className="h-4 w-4 text-primary" />
-                        {card.title}
-                        <GripVertical className="h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {card.content}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* AI Suggested Events - DRAGGABLE CARDS */}
-            <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-                  <Zap className="h-5 w-5 text-yellow-500" />
-                  AI Suggested Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 h-[400px] overflow-hidden">
-                <ScrollArea className="h-full px-6">
-                  <div className="space-y-3 pb-6">
-                    {suggestedEvents.map((suggestedEvent) => {
-                      const category = categories.find(c => c.id === suggestedEvent.category);
-                      return (
-                        <div
-                          key={suggestedEvent.id}
-                          className="group p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-move transition-all duration-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 hover:scale-[1.02] bg-gray-50 dark:bg-gray-800 select-none"
-                          draggable={true}
-                          onDragStart={(e) => handleDragStart(e, suggestedEvent)}
-                          onDragEnd={handleDragEnd}
-                          style={{
-                            borderLeftColor: category?.color,
-                            borderLeftWidth: '4px'
-                          }}
-                        >
-                          <div className="flex items-start gap-3">
-                            <GripVertical className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                                {suggestedEvent.title}
-                              </h4>
-                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
-                                {suggestedEvent.description}
-                              </p>
-                              <div className="flex items-center gap-3 mt-2">
-                                <Badge variant="secondary" className="text-xs rounded-md">
-                                  {suggestedEvent.duration}h
-                                </Badge>
-                                {suggestedEvent.defaultAttendees && (
-                                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                                    <Users className="h-3 w-3" />
-                                    {suggestedEvent.defaultAttendees}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-
-            {/* Weekly Analytics */}
-            <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-                  <Activity className="h-5 w-5 text-blue-500" />
-                  Weekly Analytics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <WeeklyBarChart events={events} />
-              </CardContent>
-            </Card>
-
-            {/* Recent Events */}
-            <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-                  <Calendar className="h-5 w-5 text-green-500" />
-                  Upcoming Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 h-[400px] overflow-hidden">
-                <ScrollArea className="h-full px-6">
-                  <div className="space-y-3 pb-6">
-                    {upcomingEvents.slice(0, 8).map((event) => {
-                      const category = categories.find(c => c.id === event.category);
-                      return (
-                        <div
-                          key={event.id}
-                          className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 bg-gray-50 dark:bg-gray-800"
-                          onClick={() => onEventClick(event)}
-                          style={{
-                            borderLeftColor: category?.color,
-                            borderLeftWidth: '4px'
-                          }}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                                {event.title}
-                              </h4>
-                              <div className="flex items-center gap-4 mt-2 text-xs text-gray-600 dark:text-gray-400">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {format(parseISO(event.start), 'MMM d, h:mm a')}
-                                </div>
-                                {event.attendees && (
-                                  <div className="flex items-center gap-1">
-                                    <Users className="h-3 w-3" />
-                                    {event.attendees}
-                                  </div>
-                                )}
-                              </div>
-                              {event.location && (
-                                <div className="flex items-center gap-1 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                  <MapPin className="h-3 w-3" />
-                                  <span className="truncate">{event.location}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+          {/* Dashboard Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {enabledCards.map((card) => {
+              const IconComponent = card.icon;
+              return (
+                <Card
+                  key={card.id}
+                  className={`rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-move transition-all duration-200 hover:shadow-lg hover:scale-[1.02] ${
+                    draggedCard === card.id ? 'opacity-50 scale-95' : ''
+                  }`}
+                  draggable={true}
+                  onDragStart={(e) => handleCardDragStart(e, card)}
+                  onDragEnd={handleCardDragEnd}
+                  onDragOver={handleCardDragOver}
+                  onDrop={(e) => handleCardDrop(e, card.id)}
+                >
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <IconComponent className="h-5 w-5 text-primary" />
+                      {card.title}
+                      <GripVertical className="h-4 w-4 text-gray-400 ml-auto opacity-60 hover:opacity-100 transition-opacity" />
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {card.content}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>
