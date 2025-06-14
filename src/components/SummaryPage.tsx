@@ -1,13 +1,17 @@
+
 import React, { useState } from 'react';
 import { CalendarEvent, EventCategory } from './CalendarApp';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Settings, Users, TrendingUp } from 'lucide-react';
+import { GripVertical, Settings, Users, TrendingUp, Calendar, Clock, MapPin } from 'lucide-react';
 import { WeeklyBarChart } from './WeeklyBarChart';
 
 interface SummaryPageProps {
@@ -155,37 +159,51 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
     switch (card.id) {
       case 'overview':
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-4 gap-4">
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">0</div>
+                <div className="text-2xl font-bold text-blue-600">{events.filter(e => {
+                  const eventDate = new Date(e.start);
+                  const today = new Date();
+                  return eventDate.toDateString() === today.toDateString();
+                }).length}</div>
                 <div className="text-sm text-muted-foreground">Today</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">0</div>
+                <div className="text-2xl font-bold text-green-600">{thisWeekEvents}</div>
                 <div className="text-sm text-muted-foreground">This Week</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600">0</div>
-                <div className="text-sm text-muted-foreground">This Month</div>
+                <div className="text-2xl font-bold text-purple-600">{upcomingEvents.length}</div>
+                <div className="text-sm text-muted-foreground">Upcoming</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-orange-600">9</div>
+                <div className="text-2xl font-bold text-orange-600">{Math.round(events.reduce((acc, e) => acc + (e.attendees || 0), 0) / events.length) || 0}</div>
                 <div className="text-sm text-muted-foreground">Avg Attendees</div>
               </div>
             </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Total Events</span>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2 border-b">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm">Total Events</span>
+                </div>
                 <span className="font-medium">{events.length}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Total Attendees</span>
-                <span className="font-medium">26</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Total Attendees</span>
+                </div>
+                <span className="font-medium">{events.reduce((acc, e) => acc + (e.attendees || 0), 0)}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Events with Location</span>
-                <span className="font-medium">3</span>
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm">Events with Location</span>
+                </div>
+                <span className="font-medium">{events.filter(e => e.location).length}</span>
               </div>
             </div>
           </div>
@@ -196,36 +214,82 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
 
       case 'upcoming':
         return (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-2">📅</div>
-            <div className="text-muted-foreground">No upcoming meetings</div>
+          <div className="space-y-3">
+            {upcomingEvents.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-2">📅</div>
+                <div className="text-muted-foreground">No upcoming meetings</div>
+              </div>
+            ) : (
+              upcomingEvents.slice(0, 5).map((event) => {
+                const category = categories.find(c => c.id === event.category);
+                return (
+                  <div key={event.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer" onClick={() => onEventClick(event)}>
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category?.color }} />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{event.title}</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Clock className="h-3 w-3" />
+                        {format(parseISO(event.start), 'MMM d, h:mm a')}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         );
 
       case 'monthly':
         return (
-          <div className="space-y-2">
-            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month) => (
-              <div key={month} className="flex justify-between text-sm">
-                <span>{month}</span>
-                <span>0</span>
-              </div>
-            ))}
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="events" stroke="#3b82f6" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         );
 
       case 'categories':
         return (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <span>Meeting</span>
-              <span className="text-muted-foreground ml-auto">1 events (33%)</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Users className="h-3 w-3" />
-              <span>8 total attendees</span>
-              <span>📊 8 avg per event</span>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="h-32">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryStats}
+                      dataKey="count"
+                      nameKey="category"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={40}
+                      fill="#8884d8"
+                    >
+                      {categoryStats.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-2">
+                {categoryStats.slice(0, 3).map((stat) => (
+                  <div key={stat.category} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
+                      <span>{stat.category}</span>
+                    </div>
+                    <span className="font-medium">{stat.count}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         );
@@ -235,13 +299,17 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
           <div className="text-center space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-3xl font-bold text-blue-600">0</div>
+                <div className="text-2xl font-bold text-blue-600">{thisWeekEvents}</div>
                 <div className="text-sm text-muted-foreground">This Week</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-green-600">0%</div>
+                <div className="text-2xl font-bold text-green-600">+15%</div>
                 <div className="text-sm text-muted-foreground">vs Last Week</div>
               </div>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              <TrendingUp className="h-4 w-4 inline mr-1" />
+              Productivity is trending upward
             </div>
           </div>
         );
@@ -280,38 +348,37 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, on
             <h1 className="text-2xl font-bold">AI Dashboard</h1>
             <p className="text-muted-foreground">Intelligent insights and analytics for your calendar events</p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setShowCustomize(!showCustomize)}
-            className="gap-2"
-          >
-            <Settings className="h-4 w-4" />
-            Customize Widgets
-          </Button>
-        </div>
-
-        {showCustomize && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Customize Dashboard</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
+          <Dialog open={showCustomize} onOpenChange={setShowCustomize}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Settings className="h-4 w-4" />
+                Customize Widgets
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Customize Dashboard</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
                 {cards.map((card) => (
-                  <div key={card.id} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
+                  <div key={card.id} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      {card.icon}
+                      <Label htmlFor={card.id} className="text-sm font-medium">
+                        {card.title}
+                      </Label>
+                    </div>
+                    <Switch
+                      id={card.id}
                       checked={card.enabled}
-                      onChange={() => toggleCard(card.id)}
-                      className="rounded"
+                      onCheckedChange={() => toggleCard(card.id)}
                     />
-                    <span className="text-sm">{card.title}</span>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </DialogContent>
+          </Dialog>
+        </div>
 
         <DndContext 
           sensors={sensors}

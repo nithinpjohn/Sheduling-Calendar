@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -399,37 +400,40 @@ export const CalendarApp: React.FC = () => {
         return <SettingsPage />;
       case 'calendar':
         return (
-          <div className="h-full">
+          <div className="h-full flex flex-col">
             <div className="border-b bg-card p-4">
-              <div className="flex items-center justify-end space-x-2">
-                <Button
-                  variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrentView('dayGridMonth')}
-                >
-                  Month
-                </Button>
-                <Button
-                  variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrentView('timeGridWeek')}
-                >
-                  Week
-                </Button>
-                <Button
-                  variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrentView('timeGridDay')}
-                >
-                  Day
-                </Button>
-                <Button
-                  variant={currentView === 'gantt' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrentView('gantt')}
-                >
-                  Gantt
-                </Button>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Calendar View</h2>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentView('dayGridMonth')}
+                  >
+                    Month
+                  </Button>
+                  <Button
+                    variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentView('timeGridWeek')}
+                  >
+                    Week
+                  </Button>
+                  <Button
+                    variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentView('timeGridDay')}
+                  >
+                    Day
+                  </Button>
+                  <Button
+                    variant={currentView === 'gantt' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentView('gantt')}
+                  >
+                    Gantt
+                  </Button>
+                </div>
               </div>
             </div>
             <div className="flex-1 p-6">
@@ -490,27 +494,35 @@ export const CalendarApp: React.FC = () => {
         
         <div className="flex-1 flex flex-col">
           <div className="border-b bg-card p-4">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant={currentPage === 'dashboard' ? "default" : "outline"}
-                onClick={() => setCurrentPage('dashboard')}
-                className="gap-2"
-              >
-                <BarChart3 className="h-4 w-4" />
-                AI Dashboard
-              </Button>
-              <Button
-                variant={currentPage === 'calendar' ? "default" : "outline"}
-                onClick={() => setCurrentPage('calendar')}
-                className="gap-2"
-              >
-                <CalendarIcon className="h-4 w-4" />
-                Calendar
-              </Button>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant={currentPage === 'dashboard' ? "default" : "outline"}
+                  onClick={() => setCurrentPage('dashboard')}
+                  className="gap-2"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  AI Dashboard
+                </Button>
+                <Button
+                  variant={currentPage === 'calendar' ? "default" : "outline"}
+                  onClick={() => setCurrentPage('calendar')}
+                  className="gap-2"
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                  Calendar
+                </Button>
+              </div>
+              
+              {!isLoggedIn && (
+                <Button onClick={() => setShowLogin(true)} className="gap-2">
+                  Login
+                </Button>
+              )}
             </div>
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 overflow-hidden">
             {renderCurrentPage()}
           </div>
         </div>
