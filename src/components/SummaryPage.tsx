@@ -3,17 +3,46 @@ import React, { useState } from 'react';
 import { CalendarEvent, EventCategory } from './CalendarApp';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { 
   Calendar, 
-  TrendingUp, 
   Users, 
+  MapPin, 
   Clock, 
+  TrendingUp, 
+  BarChart3, 
+  PieChart,
+  Target,
+  Activity,
+  Settings,
   GripVertical,
-  CalendarDays,
-  MapPin
+  Eye,
+  EyeOff
 } from 'lucide-react';
+import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval, isFuture, isToday, startOfWeek, endOfWeek } from 'date-fns';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import {
+  CSS,
+} from '@dnd-kit/utilities';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface SummaryPageProps {
   events: CalendarEvent[];
@@ -21,400 +50,412 @@ interface SummaryPageProps {
   onEventClick: (event: CalendarEvent) => void;
 }
 
-interface DraggableCardProps {
+interface DashboardCard {
   id: string;
-  children: React.ReactNode;
-  onDragStart: (id: string) => void;
-  onDragOver: (id: string) => void;
-  onDrop: (id: string) => void;
+  title: string;
+  component: React.ReactNode;
+  enabled: boolean;
 }
 
-const DraggableCard: React.FC<DraggableCardProps> = ({ id, children, onDragStart, onDragOver, onDrop }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
+const SortableCard: React.FC<{ card: DashboardCard; onToggle: (id: string) => void }> = ({ card, onToggle }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: card.id });
 
-  const handleDragStart = (e: React.DragEvent) => {
-    setIsDragging(true);
-    e.dataTransfer.setData('text/plain', id);
-    onDragStart(id);
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-    onDragOver(id);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    setIsDragging(false);
-    const draggedId = e.dataTransfer.getData('text/plain');
-    onDrop(draggedId);
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-  };
+  if (!card.enabled) return null;
 
   return (
-    <div
-      draggable
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      onDragEnd={handleDragEnd}
-      className={`transition-all duration-200 ${
-        isDragging ? 'opacity-50 scale-105' : ''
-      } ${
-        isDragOver ? 'border-primary border-2 bg-primary/5' : ''
-      }`}
-    >
-      <Card className="cursor-move group hover:shadow-md transition-shadow">
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <Card className="relative group">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-base font-medium">{card.title}</CardTitle>
           <div className="flex items-center gap-2">
-            <GripVertical className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
-            {children}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onToggle(card.id)}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <EyeOff className="h-4 w-4" />
+            </Button>
+            <div {...listeners} className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </div>
           </div>
         </CardHeader>
+        <CardContent>
+          {card.component}
+        </CardContent>
       </Card>
     </div>
   );
 };
 
 export const SummaryPage: React.FC<SummaryPageProps> = ({ events, categories, onEventClick }) => {
-  const [cardOrder, setCardOrder] = useState([
-    'overview',
-    'monthlyChart',
-    'categoryChart',
-    'upcomingEvents',
-    'categoryPerformance',
-    'weeklyTrend'
-  ]);
+  const [showCustomizeDialog, setShowCustomizeDialog] = useState(false);
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-  const [draggedCard, setDraggedCard] = useState<string | null>(null);
-
-  const handleDragStart = (id: string) => {
-    setDraggedCard(id);
-  };
-
-  const handleDragOver = (id: string) => {
-    // Visual feedback handled in DraggableCard
-  };
-
-  const handleDrop = (targetId: string) => {
-    if (!draggedCard || draggedCard === targetId) return;
-
-    const newOrder = [...cardOrder];
-    const draggedIndex = newOrder.indexOf(draggedCard);
-    const targetIndex = newOrder.indexOf(targetId);
-
-    newOrder.splice(draggedIndex, 1);
-    newOrder.splice(targetIndex, 0, draggedCard);
-
-    setCardOrder(newOrder);
-    setDraggedCard(null);
-  };
-
-  // Calculate statistics
-  const totalEvents = events.length;
-  const upcomingEvents = events.filter(event => new Date(event.start) > new Date());
-  const todayEvents = events.filter(event => {
+  // Initialize dashboard cards with their components
+  const initializeDashboardCards = (): DashboardCard[] => {
     const today = new Date();
-    const eventDate = new Date(event.start);
-    return eventDate.toDateString() === today.toDateString();
-  });
-
-  // Monthly data for charts
-  const last6Months = eachMonthOfInterval({
-    start: subMonths(new Date(), 5),
-    end: new Date()
-  });
-
-  const monthlyData = last6Months.map(month => {
-    const monthStart = startOfMonth(month);
-    const monthEnd = endOfMonth(month);
-    const eventsInMonth = events.filter(event => {
-      const eventDate = new Date(event.start);
-      return eventDate >= monthStart && eventDate <= monthEnd;
+    const thisWeek = { start: startOfWeek(today), end: endOfWeek(today) };
+    const thisMonth = { start: startOfMonth(today), end: endOfMonth(today) };
+    
+    const todayEvents = events.filter(event => isToday(parseISO(event.start)));
+    const thisWeekEvents = events.filter(event => 
+      isWithinInterval(parseISO(event.start), thisWeek)
+    );
+    const thisMonthEvents = events.filter(event => 
+      isWithinInterval(parseISO(event.start), thisMonth)
+    );
+    const upcomingEvents = events.filter(event => isFuture(parseISO(event.start))).slice(0, 5);
+    
+    // Category performance data
+    const categoryStats = categories.map(category => {
+      const categoryEvents = events.filter(e => e.category === category.id);
+      const totalAttendees = categoryEvents.reduce((sum, e) => sum + (e.attendees || 0), 0);
+      const avgAttendees = categoryEvents.length > 0 ? Math.round(totalAttendees / categoryEvents.length) : 0;
+      
+      return {
+        ...category,
+        eventCount: categoryEvents.length,
+        totalAttendees,
+        avgAttendees,
+        percentage: events.length > 0 ? Math.round((categoryEvents.length / events.length) * 100) : 0
+      };
     });
 
-    return {
-      month: format(month, 'MMM'),
-      events: eventsInMonth.length,
-    };
-  });
-
-  // Category performance data
-  const categoryData = categories.map(category => {
-    const categoryEvents = events.filter(event => event.category === category.id);
-    return {
-      name: category.name,
-      events: categoryEvents.length,
-      color: category.color,
-    };
-  });
-
-  // Weekly trend data
-  const weeklyData = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-    const dayEvents = events.filter(event => {
-      const eventDate = new Date(event.start);
-      return eventDate.toDateString() === date.toDateString();
+    // Monthly trends data
+    const monthlyData = Array.from({ length: 12 }, (_, i) => {
+      const month = new Date(2025, i, 1);
+      const monthStart = startOfMonth(month);
+      const monthEnd = endOfMonth(month);
+      const monthEvents = events.filter(event =>
+        isWithinInterval(parseISO(event.start), { start: monthStart, end: monthEnd })
+      );
+      
+      return {
+        month: format(month, 'MMM'),
+        count: monthEvents.length
+      };
     });
-    return {
-      day: format(date, 'EEE'),
-      events: dayEvents.length,
-    };
-  });
 
-  const getUpcomingEvents = () => {
-    return events
-      .filter(event => new Date(event.start) > new Date())
-      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-      .slice(0, 5);
-  };
-
-  const formatEventDate = (dateString: string) => {
-    const date = parseISO(dateString);
-    return format(date, 'MMM d, h:mm a');
-  };
-
-  const renderCard = (cardId: string) => {
-    switch (cardId) {
-      case 'overview':
-        return (
-          <DraggableCard
-            key={cardId}
-            id={cardId}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            <CardTitle className="text-lg">Overview</CardTitle>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm text-muted-foreground">Total Events</span>
-                  </div>
-                  <p className="text-2xl font-bold">{totalEvents}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                    <span className="text-sm text-muted-foreground">Upcoming</span>
-                  </div>
-                  <p className="text-2xl font-bold">{upcomingEvents.length}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm text-muted-foreground">Today</span>
-                  </div>
-                  <p className="text-2xl font-bold">{todayEvents.length}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-purple-500" />
-                    <span className="text-sm text-muted-foreground">Categories</span>
-                  </div>
-                  <p className="text-2xl font-bold">{categories.length}</p>
-                </div>
+    return [
+      {
+        id: 'events-overview',
+        title: 'Events Overview',
+        enabled: true,
+        component: (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{todayEvents.length}</div>
+                <div className="text-sm text-muted-foreground">Today</div>
               </div>
-            </CardContent>
-          </DraggableCard>
-        );
-
-      case 'monthlyChart':
-        return (
-          <DraggableCard
-            key={cardId}
-            id={cardId}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            <CardTitle className="text-lg">Events Per Month</CardTitle>
-            <CardContent className="pt-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line 
-                    type="monotone" 
-                    dataKey="events" 
-                    stroke="#3B82F6" 
-                    strokeWidth={2}
-                    dot={{ fill: '#3B82F6' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </DraggableCard>
-        );
-
-      case 'categoryChart':
-        return (
-          <DraggableCard
-            key={cardId}
-            id={cardId}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            <CardTitle className="text-lg">Category Distribution</CardTitle>
-            <CardContent className="pt-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    dataKey="events"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={({ name, value }) => `${name}: ${value}`}
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600">{thisWeekEvents.length}</div>
+                <div className="text-sm text-muted-foreground">This Week</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600">{thisMonthEvents.length}</div>
+                <div className="text-sm text-muted-foreground">This Month</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-orange-600">
+                  {events.reduce((sum, e) => sum + (e.attendees || 0), 0) / events.length || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">Avg Attendees</div>
+              </div>
+            </div>
+            <div className="space-y-2 pt-2 border-t">
+              <div className="flex justify-between text-sm">
+                <span>Total Events</span>
+                <span className="font-medium">{events.length}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Total Attendees</span>
+                <span className="font-medium">{events.reduce((sum, e) => sum + (e.attendees || 0), 0)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Events with Location</span>
+                <span className="font-medium">{events.filter(e => e.location).length}</span>
+              </div>
+            </div>
+          </div>
+        )
+      },
+      {
+        id: 'upcoming-meetings',
+        title: 'Upcoming Meetings',
+        enabled: true,
+        component: (
+          <div className="space-y-3">
+            {upcomingEvents.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground">No upcoming meetings</p>
+              </div>
+            ) : (
+              upcomingEvents.map((event) => {
+                const category = categories.find(c => c.id === event.category);
+                return (
+                  <div
+                    key={event.id}
+                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                    onClick={() => onEventClick(event)}
                   >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </DraggableCard>
-        );
-
-      case 'upcomingEvents':
-        return (
-          <DraggableCard
-            key={cardId}
-            id={cardId}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            <CardTitle className="text-lg">Upcoming Events</CardTitle>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                {getUpcomingEvents().map((event) => {
-                  const category = categories.find(c => c.id === event.category);
-                  return (
                     <div
-                      key={event.id}
-                      onClick={() => onEventClick(event)}
-                      className="p-3 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: category?.color }}
-                            />
-                            <p className="text-sm font-medium truncate">{event.title}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <CalendarDays className="h-3 w-3" />
-                              <span>{formatEventDate(event.start)}</span>
-                            </div>
-                            {event.location && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <MapPin className="h-3 w-3" />
-                                <span className="truncate">{event.location}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <Badge variant="secondary" style={{ backgroundColor: `${category?.color}20`, color: category?.color }}>
-                          {category?.name}
-                        </Badge>
-                      </div>
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: category?.color }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{event.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(parseISO(event.start), 'MMM d, h:mm a')}
+                      </p>
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )
+      },
+      {
+        id: 'monthly-trends',
+        title: 'Monthly Trends',
+        enabled: true,
+        component: (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <BarChart3 className="h-4 w-4" />
+              Events created per month (2025)
+            </div>
+            <div className="space-y-2">
+              {monthlyData.map((month) => (
+                <div key={month.month} className="flex items-center justify-between text-sm">
+                  <span>{month.month}</span>
+                  <span className="font-medium">{month.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      },
+      {
+        id: 'weekly-activity',
+        title: 'Weekly Activity',
+        enabled: true,
+        component: (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Activity className="h-4 w-4" />
+              Events by day of week
+            </div>
+            <div className="space-y-2">
+              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, index) => {
+                const dayEvents = events.filter(event => {
+                  const eventDate = parseISO(event.start);
+                  return eventDate.getDay() === (index + 1) % 7;
+                });
+                const percentage = events.length > 0 ? (dayEvents.length / events.length) * 100 : 0;
+                
+                return (
+                  <div key={day} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>{day.slice(0, 3)}</span>
+                      <span className="font-medium">{dayEvents.length}</span>
+                    </div>
+                    <Progress value={percentage} className="h-2" />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )
+      },
+      {
+        id: 'category-analytics',
+        title: 'Category Analytics',
+        enabled: true,
+        component: (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <PieChart className="h-4 w-4" />
+              Performance by category
+            </div>
+            <div className="space-y-3">
+              {categoryStats.map((category) => (
+                <div key={category.id} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <span className="font-medium text-sm">{category.name}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {category.eventCount} events ({category.percentage}%)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      <span>{category.totalAttendees} total attendees</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Target className="h-3 w-3" />
+                      <span>{category.avgAttendees} avg per event</span>
+                    </div>
+                  </div>
+                  <Progress value={category.percentage} className="h-2" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      },
+      {
+        id: 'productivity-insights',
+        title: 'Productivity Insights',
+        enabled: true,
+        component: (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <TrendingUp className="h-4 w-4" />
+              Productivity metrics
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{thisWeekEvents.length}</div>
+                <div className="text-sm text-muted-foreground">This Week</div>
               </div>
-            </CardContent>
-          </DraggableCard>
-        );
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600">
+                  {thisWeekEvents.length > 0 ? '+' : ''}0%
+                </div>
+                <div className="text-sm text-muted-foreground">vs Last Week</div>
+              </div>
+            </div>
+            <div className="space-y-2 pt-2 border-t">
+              <div className="flex justify-between text-sm">
+                <span>Meeting Load</span>
+                <Badge variant={thisWeekEvents.length > 10 ? "destructive" : "secondary"}>
+                  {thisWeekEvents.length > 10 ? "High" : "Normal"}
+                </Badge>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Focus Time</span>
+                <Badge variant="secondary">Good</Badge>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    ];
+  };
 
-      case 'categoryPerformance':
-        return (
-          <DraggableCard
-            key={cardId}
-            id={cardId}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            <CardTitle className="text-lg">Category Performance</CardTitle>
-            <CardContent className="pt-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={categoryData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="events" fill="#3B82F6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </DraggableCard>
-        );
+  const [dashboardCards, setDashboardCards] = useState<DashboardCard[]>(initializeDashboardCards());
 
-      case 'weeklyTrend':
-        return (
-          <DraggableCard
-            key={cardId}
-            id={cardId}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            <CardTitle className="text-lg">Weekly Trend</CardTitle>
-            <CardContent className="pt-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="events" fill="#10B981" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </DraggableCard>
-        );
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
 
-      default:
-        return null;
+    if (active.id !== over?.id) {
+      setDashboardCards((cards) => {
+        const oldIndex = cards.findIndex((card) => card.id === active.id);
+        const newIndex = cards.findIndex((card) => card.id === over?.id);
+
+        return arrayMove(cards, oldIndex, newIndex);
+      });
     }
   };
 
+  const toggleCardVisibility = (cardId: string) => {
+    setDashboardCards(cards =>
+      cards.map(card =>
+        card.id === cardId ? { ...card, enabled: !card.enabled } : card
+      )
+    );
+  };
+
+  const enabledCards = dashboardCards.filter(card => card.enabled);
+
   return (
-    <div className="p-6 space-y-6 bg-background min-h-screen">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">AI Summary Dashboard</h1>
-        <Badge variant="secondary" className="text-sm">
-          Drag cards to reorder
-        </Badge>
+    <div className="h-full bg-background">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">AI Dashboard</h1>
+          <p className="text-muted-foreground">Intelligent insights and analytics for your calendar events</p>
+        </div>
+        <Dialog open={showCustomizeDialog} onOpenChange={setShowCustomizeDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Settings className="h-4 w-4" />
+              Customize Widgets
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Customize Dashboard</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {dashboardCards.map((card) => (
+                <div key={card.id} className="flex items-center justify-between">
+                  <Label htmlFor={`card-${card.id}`} className="font-normal">
+                    {card.title}
+                  </Label>
+                  <Switch
+                    id={`card-${card.id}`}
+                    checked={card.enabled}
+                    onCheckedChange={() => toggleCardVisibility(card.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {cardOrder.map(renderCard)}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={enabledCards.map(card => card.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {enabledCards.map((card) => (
+              <SortableCard
+                key={card.id}
+                card={card}
+                onToggle={toggleCardVisibility}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 };

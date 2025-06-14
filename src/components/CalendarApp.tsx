@@ -9,9 +9,10 @@ import { EventModal } from './EventModal';
 import { CommandSearch } from './CommandSearch';
 import { SummaryPage } from './SummaryPage';
 import { GanttView } from './GanttView';
+import { TopMenuBar } from './TopMenuBar';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CalendarIcon, BarChart3 } from 'lucide-react';
 
 export interface CalendarEvent {
   id: string;
@@ -31,6 +32,16 @@ export interface EventCategory {
   name: string;
   color: string;
   isDefault?: boolean;
+}
+
+export interface SuggestedEvent {
+  id: string;
+  title: string;
+  description: string;
+  duration: number; // in hours
+  category: string;
+  defaultAttendees?: number;
+  type: 'ai-suggested';
 }
 
 const defaultCategories: EventCategory[] = [
@@ -104,6 +115,54 @@ const sampleEvents: CalendarEvent[] = [
   }
 ];
 
+const suggestedEvents: SuggestedEvent[] = [
+  {
+    id: 'suggested-1',
+    title: 'Daily Standup',
+    description: 'Quick team sync to discuss progress and blockers',
+    duration: 0.5,
+    category: '1',
+    defaultAttendees: 6,
+    type: 'ai-suggested'
+  },
+  {
+    id: 'suggested-2',
+    title: 'Code Review Session',
+    description: 'Review recent pull requests and discuss best practices',
+    duration: 1,
+    category: '1',
+    defaultAttendees: 4,
+    type: 'ai-suggested'
+  },
+  {
+    id: 'suggested-3',
+    title: 'Client Check-in',
+    description: 'Regular client update and feedback session',
+    duration: 1.5,
+    category: '2',
+    defaultAttendees: 3,
+    type: 'ai-suggested'
+  },
+  {
+    id: 'suggested-4',
+    title: 'Team Building Activity',
+    description: 'Monthly team building and social event',
+    duration: 2,
+    category: '5',
+    defaultAttendees: 12,
+    type: 'ai-suggested'
+  },
+  {
+    id: 'suggested-5',
+    title: 'Training Session',
+    description: 'Skills development and learning workshop',
+    duration: 3,
+    category: '3',
+    defaultAttendees: 8,
+    type: 'ai-suggested'
+  }
+];
+
 export const CalendarApp: React.FC = () => {
   const [events, setEvents] = useState<CalendarEvent[]>(sampleEvents);
   const [categories, setCategories] = useState<EventCategory[]>(defaultCategories);
@@ -115,7 +174,7 @@ export const CalendarApp: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
+  const [showSummary, setShowSummary] = useState(true); // Default to AI summary
   const { toast } = useToast();
 
   // Load data from localStorage on component mount
@@ -264,15 +323,15 @@ export const CalendarApp: React.FC = () => {
     borderColor: categories.find(c => c.id === event.category)?.color,
   }));
 
-  if (showSummary) {
-    return (
-      <div className="flex h-screen bg-background">
+  return (
+    <div className="flex flex-col h-screen bg-background">
+      <TopMenuBar onSearch={openCommandSearch} />
+      
+      <div className="flex flex-1 overflow-hidden">
         <CalendarSidebar
           events={events}
           categories={categories}
           setCategories={setCategories}
-          currentView={currentView}
-          setCurrentView={setCurrentView}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           selectedCategories={selectedCategories}
@@ -283,121 +342,113 @@ export const CalendarApp: React.FC = () => {
             setIsModalOpen(true);
           }}
           onOpenCommandSearch={openCommandSearch}
+          onCreateNew={createNewEvent}
+          suggestedEvents={suggestedEvents}
           showSummary={showSummary}
           setShowSummary={setShowSummary}
-          onCreateNew={createNewEvent}
         />
         
-        <div className="flex-1">
-          <SummaryPage 
-            events={events}
-            categories={categories}
-            onEventClick={(event) => {
-              setSelectedEvent(event);
-              setIsCreating(false);
-              setIsModalOpen(true);
-            }}
-          />
-        </div>
-
-        <EventModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          event={selectedEvent}
-          isCreating={isCreating}
-          selectedDate={selectedDate}
-          categories={categories}
-          onSave={saveEvent}
-          onDelete={deleteEvent}
-        />
-
-        <CommandSearch
-          isOpen={isCommandOpen}
-          onClose={() => setIsCommandOpen(false)}
-          events={events}
-          categories={categories}
-          onEventSelect={(event) => {
-            setSelectedEvent(event);
-            setIsCreating(false);
-            setIsModalOpen(true);
-            setIsCommandOpen(false);
-          }}
-          onCreateNew={createNewEvent}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex h-screen bg-background">
-      <CalendarSidebar
-        events={events}
-        categories={categories}
-        setCategories={setCategories}
-        currentView={currentView}
-        setCurrentView={setCurrentView}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        selectedCategories={selectedCategories}
-        setSelectedCategories={setSelectedCategories}
-        onEventClick={(event) => {
-          setSelectedEvent(event);
-          setIsCreating(false);
-          setIsModalOpen(true);
-        }}
-        onOpenCommandSearch={openCommandSearch}
-        showSummary={showSummary}
-        setShowSummary={setShowSummary}
-        onCreateNew={createNewEvent}
-      />
-      
-      <div className="flex-1 flex flex-col">
-        <header className="border-b bg-card p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <CalendarIcon className="h-6 w-6 text-primary" />
-              <h1 className="text-2xl font-bold">Calendar Booking</h1>
+        <div className="flex-1 flex flex-col">
+          <div className="border-b bg-card p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant={showSummary ? "default" : "outline"}
+                  onClick={() => setShowSummary(true)}
+                  className="gap-2"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  AI Dashboard
+                </Button>
+                <Button
+                  variant={!showSummary ? "default" : "outline"}
+                  onClick={() => setShowSummary(false)}
+                  className="gap-2"
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                  Calendar
+                </Button>
+              </div>
+              
+              {!showSummary && (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentView('dayGridMonth')}
+                  >
+                    Month
+                  </Button>
+                  <Button
+                    variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentView('timeGridWeek')}
+                  >
+                    Week
+                  </Button>
+                  <Button
+                    variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentView('timeGridDay')}
+                  >
+                    Day
+                  </Button>
+                  <Button
+                    variant={currentView === 'gantt' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentView('gantt')}
+                  >
+                    Gantt
+                  </Button>
+                </div>
+              )}
             </div>
-            <Button onClick={createNewEvent} className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Event
-            </Button>
           </div>
-        </header>
 
-        <div className="flex-1 p-6">
-          <div className="h-full">
-            {currentView === 'gantt' ? (
-              <GanttView events={calendarEvents} categories={categories} />
-            ) : (
-              <FullCalendar
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView={currentView}
-                headerToolbar={{
-                  left: 'prev,next today',
-                  center: 'title',
-                  right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                }}
-                events={calendarEvents}
-                dateClick={handleDateClick}
-                eventClick={handleEventClick}
-                eventDrop={handleEventDrop}
-                eventResize={handleEventResize}
-                editable={true}
-                droppable={true}
-                selectable={true}
-                selectMirror={true}
-                height="100%"
-                eventDisplay="block"
-                dayMaxEvents={true}
-                weekends={true}
-                views={{
-                  dayGridMonth: {
-                    dayMaxEventRows: 3
-                  }
-                }}
-              />
-            )}
+          <div className="flex-1 p-6">
+            <div className="h-full">
+              {showSummary ? (
+                <SummaryPage 
+                  events={events}
+                  categories={categories}
+                  onEventClick={(event) => {
+                    setSelectedEvent(event);
+                    setIsCreating(false);
+                    setIsModalOpen(true);
+                  }}
+                />
+              ) : currentView === 'gantt' ? (
+                <GanttView events={calendarEvents} categories={categories} />
+              ) : (
+                <FullCalendar
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView={currentView}
+                  headerToolbar={{
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: ''
+                  }}
+                  events={calendarEvents}
+                  dateClick={handleDateClick}
+                  eventClick={handleEventClick}
+                  eventDrop={handleEventDrop}
+                  eventResize={handleEventResize}
+                  editable={true}
+                  droppable={true}
+                  selectable={true}
+                  selectMirror={true}
+                  height="100%"
+                  eventDisplay="block"
+                  dayMaxEvents={true}
+                  weekends={true}
+                  views={{
+                    dayGridMonth: {
+                      dayMaxEventRows: 3
+                    }
+                  }}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
