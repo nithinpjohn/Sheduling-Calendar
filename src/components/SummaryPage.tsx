@@ -129,40 +129,74 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
         icon: Activity,
         enabled: true,
         content: (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{thisWeekEvents.length}</div>
-                <div className="text-sm text-muted-foreground">Today</div>
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-500 rounded-lg">
+                    <Calendar className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{thisWeekEvents.length}</div>
+                    <div className="text-xs text-blue-600/70 dark:text-blue-400/70 font-medium">This Week</div>
+                  </div>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">{thisWeekEvents.length}</div>
-                <div className="text-sm text-muted-foreground">This Week</div>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-xl border border-green-200 dark:border-green-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-500 rounded-lg">
+                    <TrendingUp className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{events.length}</div>
+                    <div className="text-xs text-green-600/70 dark:text-green-400/70 font-medium">Total Events</div>
+                  </div>
+                </div>
               </div>
             </div>
+            
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{events.length}</div>
-                <div className="text-sm text-muted-foreground">This Month</div>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-xl border border-purple-200 dark:border-purple-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-500 rounded-lg">
+                    <Target className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{categories.length}</div>
+                    <div className="text-xs text-purple-600/70 dark:text-purple-400/70 font-medium">Categories</div>
+                  </div>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">9</div>
-                <div className="text-sm text-muted-foreground">Avg Attendees</div>
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-4 rounded-xl border border-orange-200 dark:border-orange-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-500 rounded-lg">
+                    <MapPin className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{events.filter(e => e.location).length}</div>
+                    <div className="text-xs text-orange-600/70 dark:text-orange-400/70 font-medium">With Location</div>
+                  </div>
+                </div>
               </div>
             </div>
-            <Separator />
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">Total Events</span>
-                <span className="font-medium">{events.length}</span>
+
+            <Separator className="my-4" />
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Completion Rate</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="w-3/4 h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"></div>
+                  </div>
+                  <span className="text-sm font-bold text-green-600 dark:text-green-400">75%</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Total Attendees</span>
-                <span className="font-medium">26</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Events with Location</span>
-                <span className="font-medium">{events.filter(e => e.location).length}</span>
+              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Average Duration</span>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  1.5 hrs
+                </Badge>
               </div>
             </div>
           </div>
@@ -389,6 +423,26 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
     setIsDragging(true);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', card.id);
+    
+    // Create ghost image
+    const ghostElement = document.createElement('div');
+    ghostElement.className = 'bg-white dark:bg-gray-900 border-2 border-blue-500 rounded-xl p-4 shadow-2xl opacity-90 transform rotate-3 scale-105';
+    ghostElement.innerHTML = `
+      <div class="flex items-center gap-2 font-medium text-gray-900 dark:text-white">
+        <div class="w-5 h-5 bg-blue-500 rounded"></div>
+        ${card.title}
+      </div>
+    `;
+    ghostElement.style.position = 'absolute';
+    ghostElement.style.top = '-1000px';
+    ghostElement.style.width = '200px';
+    document.body.appendChild(ghostElement);
+    e.dataTransfer.setDragImage(ghostElement, 100, 25);
+    
+    // Clean up ghost element after drag starts
+    setTimeout(() => {
+      document.body.removeChild(ghostElement);
+    }, 0);
   };
 
   const handleCardDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
@@ -578,13 +632,13 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
               return (
                 <Card
                   key={card.id}
-                  className={`rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-all duration-200 ${
+                  className={`rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-all duration-300 ${
                     isBeingDragged 
-                      ? 'opacity-50 scale-95 rotate-2 shadow-2xl z-50' 
+                      ? 'opacity-30 scale-95 rotate-2 shadow-2xl z-50' 
                       : isDropTarget 
-                        ? 'scale-105 shadow-lg border-blue-500 border-2' 
-                        : 'hover:shadow-lg hover:scale-[1.02]'
-                  } ${isDragging && !isBeingDragged ? 'transition-transform duration-300' : ''}`}
+                        ? 'scale-105 shadow-xl border-blue-500 border-2 bg-blue-50 dark:bg-blue-950/50' 
+                        : 'hover:shadow-lg hover:scale-[1.02] hover:border-gray-300 dark:hover:border-gray-600'
+                  } ${isDragging && !isBeingDragged ? 'transition-all duration-300 ease-out' : ''}`}
                   draggable={false}
                   onDragStart={(e) => handleCardDragStart(e, card)}
                   onDragEnd={handleCardDragEnd}
@@ -597,7 +651,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                       <IconComponent className="h-5 w-5 text-primary" />
                       {card.title}
                       <div 
-                        className="drag-handle ml-auto p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-grab active:cursor-grabbing transition-colors"
+                        className="drag-handle ml-auto p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-110"
                         draggable={true}
                       >
                         <GripVertical className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
