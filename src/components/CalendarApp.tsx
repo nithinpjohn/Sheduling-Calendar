@@ -621,6 +621,14 @@ export const CalendarApp: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    className="p-2 hover:bg-muted rounded-lg"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                  </Button>
+                  <Button
                     variant={currentPage === 'dashboard' ? "default" : "outline"}
                     onClick={() => setCurrentPage('dashboard')}
                     className="gap-2"
