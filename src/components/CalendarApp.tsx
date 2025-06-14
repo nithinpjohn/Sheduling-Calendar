@@ -427,82 +427,125 @@ export const CalendarApp: React.FC = () => {
     }
 
     return (
-      <div className="h-full bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {currentView === 'dayGridMonth' && 'Month View'}
-            {currentView === 'timeGridWeek' && 'Week View'}
-            {currentView === 'timeGridDay' && 'Day View'}
-          </h2>
-        </div>
-        <div className="p-6">
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView={currentView}
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: ''
-            }}
-            events={calendarEvents}
-            dateClick={handleDateClick}
-            select={handleDateSelect}
-            eventClick={handleEventClick}
-            eventDrop={handleEventDrop}
-            eventResize={handleEventResize}
-            editable={true}
-            droppable={true}
-            selectable={true}
-            selectMirror={true}
-            height="600px"
-            eventDisplay="block"
-            dayMaxEvents={true}
-            weekends={true}
-            slotMinTime="00:00:00"
-            slotMaxTime="24:00:00"
-            slotDuration="01:00:00"
-            slotLabelInterval="01:00:00"
-            nowIndicator={true}
-            eventResizableFromStart={true}
-            eventStartEditable={true}
-            eventDurationEditable={true}
-            allDaySlot={false}
-            views={{
-              dayGridMonth: {
-                dayMaxEventRows: 3
-              },
-              timeGridWeek: {
-                slotLabelFormat: {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false
+      <div className="h-full overflow-auto">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  {currentView === 'dayGridMonth' && 'Month Overview'}
+                  {currentView === 'timeGridWeek' && 'Weekly Schedule'}
+                  {currentView === 'timeGridDay' && 'Daily Agenda'}
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Manage your schedule with ease
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleViewChange('dayGridMonth')}
+                  className="rounded-lg"
+                >
+                  Month
+                </Button>
+                <Button
+                  variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleViewChange('timeGridWeek')}
+                  className="rounded-lg"
+                >
+                  Week
+                </Button>
+                <Button
+                  variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleViewChange('timeGridDay')}
+                  className="rounded-lg"
+                >
+                  Day
+                </Button>
+                <Button
+                  variant={currentView === 'gantt' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleViewChange('gantt')}
+                  className="rounded-lg"
+                >
+                  Gantt
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="p-8">
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView={currentView}
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: ''
+              }}
+              events={calendarEvents}
+              dateClick={handleDateClick}
+              select={handleDateSelect}
+              eventClick={handleEventClick}
+              eventDrop={handleEventDrop}
+              eventResize={handleEventResize}
+              editable={true}
+              droppable={true}
+              selectable={true}
+              selectMirror={true}
+              height="600px"
+              eventDisplay="block"
+              dayMaxEvents={true}
+              weekends={true}
+              slotMinTime="00:00:00"
+              slotMaxTime="24:00:00"
+              slotDuration="01:00:00"
+              slotLabelInterval="01:00:00"
+              nowIndicator={true}
+              eventResizableFromStart={true}
+              eventStartEditable={true}
+              eventDurationEditable={true}
+              allDaySlot={false}
+              views={{
+                dayGridMonth: {
+                  dayMaxEventRows: 3
                 },
-                allDaySlot: false
-              },
-              timeGridDay: {
-                slotLabelFormat: {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false
+                timeGridWeek: {
+                  slotLabelFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  },
+                  allDaySlot: false
                 },
-                allDaySlot: false
-              }
-            }}
-            drop={(info) => {
-              try {
-                const draggedData = info.draggedEl.getAttribute('data-suggested-event');
-                if (draggedData) {
-                  const parsed = JSON.parse(draggedData);
-                  if (parsed.type === 'suggested-event' && parsed.data) {
-                    handleSuggestedEventDrop(parsed.data, info.date);
-                  }
+                timeGridDay: {
+                  slotLabelFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  },
+                  allDaySlot: false
                 }
-              } catch (error) {
-                console.error('Error processing dropped event:', error);
-              }
-            }}
-          />
+              }}
+              drop={(info) => {
+                try {
+                  const draggedData = info.draggedEl.getAttribute('data-suggested-event');
+                  if (draggedData) {
+                    const parsed = JSON.parse(draggedData);
+                    if (parsed.type === 'suggested-event' && parsed.data) {
+                      handleSuggestedEventDrop(parsed.data, info.date);
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error processing dropped event:', error);
+                }
+              }}
+            />
+          </div>
         </div>
       </div>
     );
@@ -524,49 +567,8 @@ export const CalendarApp: React.FC = () => {
         );
       case 'calendar':
         return (
-          <div className="h-full flex flex-col">
-            <div className="border-b bg-white dark:bg-gray-900 p-4 rounded-t-xl border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Calendar View</h2>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleViewChange('dayGridMonth')}
-                    className="rounded-lg"
-                  >
-                    Month
-                  </Button>
-                  <Button
-                    variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleViewChange('timeGridWeek')}
-                    className="rounded-lg"
-                  >
-                    Week
-                  </Button>
-                  <Button
-                    variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleViewChange('timeGridDay')}
-                    className="rounded-lg"
-                  >
-                    Day
-                  </Button>
-                  <Button
-                    variant={currentView === 'gantt' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleViewChange('gantt')}
-                    className="rounded-lg"
-                  >
-                    Gantt
-                  </Button>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 p-6">
-              {renderCalendarView()}
-            </div>
+          <div className="h-full overflow-auto">
+            {renderCalendarView()}
           </div>
         );
       default:
@@ -634,10 +636,7 @@ export const CalendarApp: React.FC = () => {
             />
           )}
           
-          <div 
-            className="flex-1 flex flex-col transition-all duration-300"
-            style={{ maxWidth: `${containerWidth[0]}%` }}
-          >
+          <div className="flex-1 flex flex-col overflow-hidden">
             <div className="border-b bg-white dark:bg-gray-900 p-4 border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -699,8 +698,16 @@ export const CalendarApp: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-hidden">
-              {renderCurrentPage()}
+            <div className="flex-1 overflow-hidden flex justify-center">
+              <div 
+                className="transition-all duration-300"
+                style={{ 
+                  width: `${containerWidth[0]}%`,
+                  maxWidth: '100%'
+                }}
+              >
+                {renderCurrentPage()}
+              </div>
             </div>
           </div>
         </div>
