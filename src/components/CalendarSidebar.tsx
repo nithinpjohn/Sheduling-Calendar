@@ -90,7 +90,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   };
 
   const handleDragStart = (e: React.DragEvent, suggestedEvent: SuggestedEvent) => {
-    e.dataTransfer.setData('text/plain', JSON.stringify({
+    e.dataTransfer.setData('application/json', JSON.stringify({
       type: 'suggested-event',
       data: suggestedEvent
     }));
