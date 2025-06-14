@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Bell, User, Settings, LogOut, Monitor, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ThemeToggle } from './ThemeToggle';
 
 interface TopMenuBarProps {
   onSearch: () => void;
@@ -51,7 +51,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
-    <header className="border-b bg-white shadow-sm">
+    <header className="border-b bg-white dark:bg-slate-800 shadow-sm">
       <div className="flex items-center justify-between px-6 py-3">
         {/* Logo */}
         <div className="flex items-center space-x-4">
@@ -64,17 +64,41 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search events... (⌘K)"
-              className="pl-10 cursor-pointer"
+              className="pl-10 cursor-pointer bg-white dark:bg-slate-700"
               onClick={onSearch}
               readOnly
             />
           </div>
         </div>
 
-        {/* Right Side - Notifications and Profile */}
-        <div className="flex items-center space-x-4">
+        {/* Right Side - Theme, Notifications and Profile */}
+        <div className="flex items-center space-x-2">
+          <ThemeToggle />
+          
           {isLoggedIn ? (
             <>
+              {/* Quick Actions */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Zap className="h-4 w-4" />
+                    Quick Actions
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onProfileClick}>
+                    <User className="mr-2 h-4 w-4" />
+                    Profile Page
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onSettingsClick}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings Page
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -87,7 +111,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-96">
+                <DropdownMenuContent align="end" className="w-96 bg-white dark:bg-slate-800">
                   <div className="flex items-center justify-between p-3">
                     <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
                     <Button variant="ghost" size="sm" className="text-xs">
@@ -141,7 +165,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-slate-800">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onProfileClick}>

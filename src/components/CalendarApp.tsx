@@ -395,57 +395,80 @@ export const CalendarApp: React.FC = () => {
     }
 
     return (
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView={currentView}
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: ''
-        }}
-        events={calendarEvents}
-        dateClick={handleDateClick}
-        select={handleDateSelect}
-        eventClick={handleEventClick}
-        eventDrop={handleEventDrop}
-        eventResize={handleEventResize}
-        editable={true}
-        droppable={true}
-        selectable={true}
-        selectMirror={true}
-        height="100%"
-        eventDisplay="block"
-        dayMaxEvents={true}
-        weekends={true}
-        slotMinTime="00:00:00"
-        slotMaxTime="24:00:00"
-        slotDuration="01:00:00"
-        slotLabelInterval="01:00:00"
-        nowIndicator={true}
-        eventResizableFromStart={true}
-        allDaySlot={false}
-        views={{
-          dayGridMonth: {
-            dayMaxEventRows: 3
-          },
-          timeGridWeek: {
-            slotLabelFormat: {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
+      <div className="h-full bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView={currentView}
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: ''
+          }}
+          events={calendarEvents}
+          dateClick={handleDateClick}
+          select={handleDateSelect}
+          eventClick={handleEventClick}
+          eventDrop={handleEventDrop}
+          eventResize={handleEventResize}
+          editable={true}
+          droppable={true}
+          selectable={true}
+          selectMirror={true}
+          height="100%"
+          eventDisplay="block"
+          dayMaxEvents={true}
+          weekends={true}
+          slotMinTime="00:00:00"
+          slotMaxTime="24:00:00"
+          slotDuration="01:00:00"
+          slotLabelInterval="01:00:00"
+          nowIndicator={true}
+          eventResizableFromStart={true}
+          eventStartEditable={true}
+          eventDurationEditable={true}
+          allDaySlot={false}
+          views={{
+            dayGridMonth: {
+              dayMaxEventRows: 3
             },
-            allDaySlot: false
-          },
-          timeGridDay: {
-            slotLabelFormat: {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
+            timeGridWeek: {
+              slotLabelFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+              },
+              allDaySlot: false
             },
-            allDaySlot: false
-          }
-        }}
-      />
+            timeGridDay: {
+              slotLabelFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+              },
+              allDaySlot: false
+            }
+          }}
+          drop={(info) => {
+            const draggedData = info.draggedEl.getAttribute('data-event');
+            if (draggedData) {
+              const eventData = JSON.parse(draggedData);
+              const newEvent: CalendarEvent = {
+                ...eventData,
+                id: Date.now().toString(),
+                start: info.date.toISOString(),
+                end: new Date(info.date.getTime() + eventData.duration * 60 * 60 * 1000).toISOString(),
+                backgroundColor: categories.find(c => c.id === eventData.category)?.color,
+                borderColor: categories.find(c => c.id === eventData.category)?.color,
+              };
+              setEvents([...events, newEvent]);
+              toast({
+                title: "Event Created",
+                description: `"${newEvent.title}" has been added to your calendar.`,
+              });
+            }
+          }}
+        />
+      </div>
     );
   };
 
@@ -458,7 +481,7 @@ export const CalendarApp: React.FC = () => {
       case 'calendar':
         return (
           <div className="h-full flex flex-col">
-            <div className="border-b bg-card p-4">
+            <div className="border-b bg-white dark:bg-slate-800 p-4 rounded-t-lg">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Calendar View</h2>
                 <div className="flex items-center space-x-2">
@@ -516,7 +539,7 @@ export const CalendarApp: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-900">
       <TopMenuBar 
         onSearch={() => setIsCommandOpen(true)}
         isLoggedIn={isLoggedIn}
@@ -552,7 +575,7 @@ export const CalendarApp: React.FC = () => {
         />
         
         <div className="flex-1 flex flex-col">
-          <div className="border-b bg-card p-4">
+          <div className="border-b bg-white dark:bg-slate-800 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Button
