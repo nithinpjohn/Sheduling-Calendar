@@ -568,8 +568,9 @@ export const CalendarApp: React.FC = () => {
             onOpenCommandSearch={() => setIsCommandOpen(true)}
             suggestedEvents={suggestedEvents}
             onSuggestedEventDrop={handleSuggestedEventDrop}
-            isLoggedIn={isLoggedIn}
-            onLogin={() => setShowLogin(true)}
+            selectedCategories={selectedCategories}
+            setSelectedCategories={setSelectedCategories}
+            setCategories={setCategories}
           />
         );
     }

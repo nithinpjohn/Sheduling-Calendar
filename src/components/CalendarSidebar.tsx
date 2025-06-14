@@ -133,12 +133,13 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     setCurrentSuggestions(safeSuggestedEvents);
   }, [safeSuggestedEvents]);
 
-  // Safely get suggestions to render - ensure we ALWAYS have a valid array
-  const suggestionsToRender = Array.isArray(currentSuggestions) && currentSuggestions.length > 0 
+  // Safely get suggestions to render - ensure we ALWAYS have a valid array and filter out any undefined items
+  const suggestionsToRender = (Array.isArray(currentSuggestions) && currentSuggestions.length > 0 
     ? currentSuggestions 
     : Array.isArray(safeSuggestedEvents) 
       ? safeSuggestedEvents 
-      : [];
+      : [])
+    .filter(item => item != null && typeof item === 'object' && item.id && item.title);
 
   return (
     <Sidebar>
@@ -255,11 +256,6 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               <ScrollArea className="h-48">
                 <div className="space-y-2">
                   {suggestionsToRender.map((suggestedEvent) => {
-                    // Add safety checks for undefined suggestedEvent and its properties
-                    if (!suggestedEvent || !suggestedEvent.id || !suggestedEvent.title) {
-                      return null;
-                    }
-                    
                     const category = getCategory(suggestedEvent.category);
                     return (
                       <Card
