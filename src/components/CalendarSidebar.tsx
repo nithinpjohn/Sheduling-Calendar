@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CalendarEvent, EventCategory } from './CalendarApp';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Search, 
@@ -20,7 +20,9 @@ import {
   Clock,
   MapPin,
   Users,
-  Command
+  Command,
+  Brain,
+  GripVertical
 } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
@@ -37,12 +39,16 @@ interface CalendarSidebarProps {
   setSelectedCategories: (categories: string[]) => void;
   onEventClick: (event: CalendarEvent) => void;
   onOpenCommandSearch: () => void;
+  showSummary: boolean;
+  setShowSummary: (show: boolean) => void;
+  onCreateNew: () => void;
 }
 
 const viewOptions = [
   { value: 'dayGridMonth', label: 'Month' },
   { value: 'timeGridWeek', label: 'Week' },
   { value: 'timeGridDay', label: 'Day' },
+  { value: 'gantt', label: 'Gantt' },
 ];
 
 const presetColors = [
@@ -62,6 +68,9 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   setSelectedCategories,
   onEventClick,
   onOpenCommandSearch,
+  showSummary,
+  setShowSummary,
+  onCreateNew,
 }) => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
@@ -166,244 +175,269 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     return eventDate >= weekStart && eventDate <= weekEnd;
   }).length;
 
+  const handleEventDragStart = (e: React.DragEvent, event: CalendarEvent) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify(event));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
     <div className="w-80 border-r bg-card p-6 overflow-y-auto">
       <div className="space-y-6">
-        {/* Search */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Search className="h-5 w-5" />
-              Search
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button 
-              variant="outline" 
-              onClick={onOpenCommandSearch}
-              className="w-full justify-start gap-2 text-muted-foreground"
-            >
-              <Command className="h-4 w-4" />
-              Search events...
-              <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                <span className="text-xs">⌘</span>K
-              </kbd>
-            </Button>
-            <Input
-              placeholder="Quick search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
-            />
-          </CardContent>
-        </Card>
+        {/* AI Summary Button */}
+        <Button
+          onClick={() => setShowSummary(!showSummary)}
+          variant={showSummary ? "default" : "outline"}
+          className="w-full gap-2 mb-4"
+        >
+          <Brain className="h-4 w-4" />
+          AI Summary
+        </Button>
 
-        {/* Quick Stats */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CalendarDays className="h-5 w-5" />
-              Quick Stats
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Total Events</span>
-              <Badge variant="secondary">{totalEvents}</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">This Week</span>
-              <Badge variant="secondary">{thisWeekEvents}</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* View Controls */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              View
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {viewOptions.map((option) => (
-                <Button
-                  key={option.value}
-                  variant={currentView === option.value ? "default" : "outline"}
-                  onClick={() => setCurrentView(option.value)}
-                  className="w-full justify-start"
+        {!showSummary && (
+          <>
+            {/* Search */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  Search
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  onClick={onOpenCommandSearch}
+                  className="w-full justify-start gap-2 text-muted-foreground"
                 >
-                  {option.label}
+                  <Command className="h-4 w-4" />
+                  Search events...
+                  <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                    <span className="text-xs">⌘</span>K
+                  </kbd>
                 </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <Input
+                  placeholder="Quick search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full"
+                />
+              </CardContent>
+            </Card>
 
-        {/* Categories */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <ChevronDown className="h-5 w-5" />
-                Categories
-              </span>
-              <Popover open={isCreatingCategory} onOpenChange={setIsCreatingCategory}>
-                <PopoverTrigger asChild>
-                  <Button size="sm" variant="outline">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category-name">Category Name</Label>
-                      <Input
-                        id="category-name"
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        placeholder="Enter category name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Color</Label>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {presetColors.map((color) => (
-                          <button
-                            key={color}
-                            onClick={() => setNewCategoryColor(color)}
-                            className={`w-6 h-6 rounded-full border-2 ${
-                              newCategoryColor === color ? 'border-primary' : 'border-gray-300'
-                            }`}
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
-                      <HexColorPicker
-                        color={newCategoryColor}
-                        onChange={setNewCategoryColor}
-                        style={{ width: '100%', height: '120px' }}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={createCategory} size="sm">
-                        Create
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setIsCreatingCategory(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {categories.map((category) => (
-                <div key={category.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={category.id}
-                      checked={selectedCategories.length === 0 || selectedCategories.includes(category.id)}
-                      onCheckedChange={() => handleCategoryToggle(category.id)}
-                    />
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: category.color }}
-                      />
-                      <Label htmlFor={category.id} className="text-sm">
-                        {category.name}
-                      </Label>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Badge variant="outline" className="text-xs">
-                      {events.filter(e => e.category === category.id).length}
-                    </Badge>
-                    {!category.isDefault && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteCategory(category.id)}
-                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
+            {/* Quick Stats */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5" />
+                  Quick Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Total Events</span>
+                  <Badge variant="secondary">{totalEvents}</Badge>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">This Week</span>
+                  <Badge variant="secondary">{thisWeekEvents}</Badge>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Upcoming Events */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Upcoming Events
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {getEventsByDate().length === 0 ? (
-                <p className="text-sm text-muted-foreground">No upcoming events</p>
-              ) : (
-                getEventsByDate().map((event) => {
-                  const category = categories.find(c => c.id === event.category);
-                  return (
-                    <div
-                      key={event.id}
-                      onClick={() => onEventClick(event)}
-                      className="p-3 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: category?.color }}
-                            />
-                            <p className="text-sm font-medium truncate">{event.title}</p>
+            {/* View Controls */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  View
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs value={currentView} onValueChange={setCurrentView} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 gap-1">
+                    <TabsTrigger value="dayGridMonth" className="text-xs">Month</TabsTrigger>
+                    <TabsTrigger value="timeGridWeek" className="text-xs">Week</TabsTrigger>
+                  </TabsList>
+                  <TabsList className="grid w-full grid-cols-2 gap-1 mt-2">
+                    <TabsTrigger value="timeGridDay" className="text-xs">Day</TabsTrigger>
+                    <TabsTrigger value="gantt" className="text-xs">Gantt</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </CardContent>
+            </Card>
+
+            {/* Categories */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <ChevronDown className="h-5 w-5" />
+                    Categories
+                  </span>
+                  <Popover open={isCreatingCategory} onOpenChange={setIsCreatingCategory}>
+                    <PopoverTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="category-name">Category Name</Label>
+                          <Input
+                            id="category-name"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            placeholder="Enter category name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Color</Label>
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {presetColors.map((color) => (
+                              <button
+                                key={color}
+                                onClick={() => setNewCategoryColor(color)}
+                                className={`w-6 h-6 rounded-full border-2 ${
+                                  newCategoryColor === color ? 'border-primary' : 'border-gray-300'
+                                }`}
+                                style={{ backgroundColor: color }}
+                              />
+                            ))}
                           </div>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <CalendarDays className="h-3 w-3" />
-                              <span>{formatEventDate(event.start)}</span>
-                              <span>•</span>
-                              <span>{formatEventTime(event.start)}</span>
-                            </div>
-                            {event.location && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <MapPin className="h-3 w-3" />
-                                <span className="truncate">{event.location}</span>
-                              </div>
-                            )}
-                            {event.attendees && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Users className="h-3 w-3" />
-                                <span>{event.attendees} attendees</span>
-                              </div>
-                            )}
-                          </div>
+                          <HexColorPicker
+                            color={newCategoryColor}
+                            onChange={setNewCategoryColor}
+                            style={{ width: '100%', height: '120px' }}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={createCategory} size="sm">
+                            Create
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setIsCreatingCategory(false)}
+                          >
+                            Cancel
+                          </Button>
                         </div>
                       </div>
+                    </PopoverContent>
+                  </Popover>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {categories.map((category) => (
+                    <div key={category.id} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={category.id}
+                          checked={selectedCategories.length === 0 || selectedCategories.includes(category.id)}
+                          onCheckedChange={() => handleCategoryToggle(category.id)}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <Label htmlFor={category.id} className="text-sm">
+                            {category.name}
+                          </Label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Badge variant="outline" className="text-xs">
+                          {events.filter(e => e.category === category.id).length}
+                        </Badge>
+                        {!category.isDefault && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteCategory(category.id)}
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Events */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    Upcoming Events
+                  </span>
+                  <Button size="sm" variant="outline" onClick={onCreateNew}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {getEventsByDate().length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No upcoming events</p>
+                  ) : (
+                    getEventsByDate().map((event) => {
+                      const category = categories.find(c => c.id === event.category);
+                      return (
+                        <div
+                          key={event.id}
+                          draggable
+                          onDragStart={(e) => handleEventDragStart(e, event)}
+                          onClick={() => onEventClick(event)}
+                          className="p-3 border rounded-lg cursor-move hover:bg-accent transition-colors group"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <GripVertical className="h-3 w-3 text-muted-foreground group-hover:text-foreground" />
+                                <div
+                                  className="w-2 h-2 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: category?.color }}
+                                />
+                                <p className="text-sm font-medium truncate">{event.title}</p>
+                              </div>
+                              <div className="space-y-1 ml-5">
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <CalendarDays className="h-3 w-3" />
+                                  <span>{formatEventDate(event.start)}</span>
+                                  <span>•</span>
+                                  <span>{formatEventTime(event.start)}</span>
+                                </div>
+                                {event.location && (
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <MapPin className="h-3 w-3" />
+                                    <span className="truncate">{event.location}</span>
+                                  </div>
+                                )}
+                                {event.attendees && (
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Users className="h-3 w-3" />
+                                    <span>{event.attendees} attendees</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );
