@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,10 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CalendarEvent, EventCategory, SuggestedEvent } from './CalendarApp';
 import { WeeklyBarChart } from './WeeklyBarChart';
-import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays, isSameDay } from 'date-fns';
+import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays, isSameDay, subMonths, eachMonthOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { Calendar, Clock, Users, MapPin, Plus, Search, TrendingUp, Activity, Target, Zap, GripVertical } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Line, PieChart, Pie, Cell } from 'recharts';
 
 interface SummaryPageProps {
   events: CalendarEvent[];
@@ -22,6 +24,13 @@ interface SummaryPageProps {
   selectedCategories: string[];
   setSelectedCategories: (categories: string[]) => void;
   setCategories: (categories: EventCategory[]) => void;
+}
+
+interface DashboardCard {
+  id: string;
+  title: string;
+  icon: React.ComponentType<any>;
+  content?: React.ReactNode;
 }
 
 export const SummaryPage: React.FC<SummaryPageProps> = ({
@@ -49,7 +58,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
   const thisWeekEvents = events.filter(event => {
     const eventDate = new Date(event.start);
     return eventDate >= weekStart && eventDate <= weekEnd;
-  }).length;
+  });
 
   const categoryStats = categories.map(category => {
     const count = events.filter(event => event.category === category.id).length;
@@ -100,7 +109,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                 <div className="text-sm font-medium text-blue-700 dark:text-blue-300">Today</div>
               </div>
               <div className="text-center p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border border-green-100 dark:border-green-800">
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">{thisWeekEvents}</div>
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">{thisWeekEvents.length}</div>
                 <div className="text-sm font-medium text-green-700 dark:text-green-300">This Week</div>
               </div>
               <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border border-purple-100 dark:border-purple-800">
@@ -265,7 +274,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
           <div className="text-center space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-6 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-100 dark:border-blue-800">
-                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">{thisWeekEvents}</div>
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">{thisWeekEvents.length}</div>
                 <div className="text-sm font-medium text-blue-700 dark:text-blue-300">This Week</div>
               </div>
               <div className="p-6 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border border-green-100 dark:border-green-800">
@@ -418,22 +427,22 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-320px)]">
               {/* AI Suggested Events */}
-              <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
                     <Zap className="h-5 w-5 text-yellow-500" />
                     AI Suggested Events
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[400px] px-6">
+                <CardContent className="p-0 h-[400px] overflow-hidden">
+                  <ScrollArea className="h-full px-6">
                     <div className="space-y-3 pb-6">
                       {suggestedEvents.map((suggestedEvent) => {
                         const category = categories.find(c => c.id === suggestedEvent.category);
                         return (
                           <div
                             key={suggestedEvent.id}
-                            className="group p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-move transition-all duration-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 hover:scale-[1.02] bg-gray-50 dark:bg-gray-800"
+                            className="group p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-move transition-all duration-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 hover:scale-[1.02] bg-gray-50 dark:bg-gray-800 select-none"
                             draggable={true}
                             onDragStart={(e) => handleDragStart(e, suggestedEvent)}
                             onDragEnd={handleDragEnd}
@@ -486,15 +495,15 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
               </Card>
 
               {/* Recent Events */}
-              <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <Card className="rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
                     <Calendar className="h-5 w-5 text-green-500" />
                     Upcoming Events
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[400px] px-6">
+                <CardContent className="p-0 h-[400px] overflow-hidden">
+                  <ScrollArea className="h-full px-6">
                     <div className="space-y-3 pb-6">
                       {upcomingEvents.slice(0, 8).map((event) => {
                         const category = categories.find(c => c.id === event.category);
