@@ -43,9 +43,13 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
-  const [currentSuggestions, setCurrentSuggestions] = useState<SuggestedEvent[]>(suggestedEvents || []);
+  const [currentSuggestions, setCurrentSuggestions] = useState<SuggestedEvent[]>([]);
 
-  const upcomingEvents = events
+  // Ensure we always have a valid array for events
+  const safeEvents = events || [];
+  const safeSuggestedEvents = suggestedEvents || [];
+
+  const upcomingEvents = safeEvents
     .filter(event => isFuture(parseISO(event.start)))
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
     .slice(0, 5);
@@ -74,7 +78,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   };
 
   const deleteCategory = (categoryId: string) => {
-    const hasEvents = events.some(event => event.category === categoryId);
+    const hasEvents = safeEvents.some(event => event.category === categoryId);
     if (hasEvents) {
       alert('Cannot delete category with existing events');
       return;
@@ -94,7 +98,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   };
 
   const shuffleSuggestions = () => {
-    const suggestions = currentSuggestions || suggestedEvents || [];
+    const suggestions = currentSuggestions.length > 0 ? currentSuggestions : safeSuggestedEvents;
     const shuffled = [...suggestions].sort(() => Math.random() - 0.5);
     setCurrentSuggestions(shuffled);
   };
@@ -126,11 +130,11 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   };
 
   React.useEffect(() => {
-    setCurrentSuggestions(suggestedEvents || []);
-  }, [suggestedEvents]);
+    setCurrentSuggestions(safeSuggestedEvents);
+  }, [safeSuggestedEvents]);
 
-  // Safely get suggestions to render
-  const suggestionsToRender = currentSuggestions || suggestedEvents || [];
+  // Safely get suggestions to render - always ensure we have a valid array
+  const suggestionsToRender = currentSuggestions.length > 0 ? currentSuggestions : safeSuggestedEvents;
 
   return (
     <Sidebar>
@@ -209,7 +213,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                         {category.name}
                       </Label>
                       <Badge variant="secondary" className="text-xs rounded-lg">
-                        {events.filter(e => e.category === category.id).length}
+                        {safeEvents.filter(e => e.category === category.id).length}
                       </Badge>
                       {!category.isDefault && (
                         <Button
@@ -344,14 +348,14 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <Card className="rounded-lg">
                   <CardContent className="p-3 text-center">
-                    <div className="text-2xl font-bold text-primary">{events.length}</div>
+                    <div className="text-2xl font-bold text-primary">{safeEvents.length}</div>
                     <div className="text-xs text-muted-foreground">Total Events</div>
                   </CardContent>
                 </Card>
                 <Card className="rounded-lg">
                   <CardContent className="p-3 text-center">
                     <div className="text-2xl font-bold text-green-600">
-                      {events.filter(e => isFuture(parseISO(e.start))).length}
+                      {safeEvents.filter(e => isFuture(parseISO(e.start))).length}
                     </div>
                     <div className="text-xs text-muted-foreground">Upcoming</div>
                   </CardContent>
