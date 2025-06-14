@@ -90,17 +90,14 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     return categories.find(c => c.id === categoryId);
   };
 
-  const handleDragStart = (e: React.DragEvent, suggestedEvent: SuggestedEvent) => {
-    // Store the event data as an attribute on the dragged element
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, suggestedEvent: SuggestedEvent) => {
+    e.dataTransfer.effectAllowed = 'copy';
     const dragData = JSON.stringify({
       type: 'suggested-event',
       data: suggestedEvent
     });
+    e.dataTransfer.setData('application/json', dragData);
     e.dataTransfer.setData('text/plain', dragData);
-    // Also store it as an attribute for FullCalendar compatibility
-    if (e.currentTarget instanceof HTMLElement) {
-      e.currentTarget.setAttribute('data-suggested-event', dragData);
-    }
   };
 
   return (
@@ -207,14 +204,14 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                 return (
                   <Card
                     key={suggestedEvent.id}
-                    className="cursor-move transition-all hover:shadow-md border-l-4"
+                    className="cursor-move transition-all hover:shadow-md border-l-4 select-none"
                     style={{ borderLeftColor: category?.color }}
-                    draggable
+                    draggable={true}
                     onDragStart={(e) => handleDragStart(e, suggestedEvent)}
                   >
                     <CardContent className="p-3">
                       <div className="flex items-start gap-2">
-                        <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-sm truncate">{suggestedEvent.title}</h4>
                           <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
