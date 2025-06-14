@@ -15,6 +15,7 @@ import { SettingsPage } from './SettingsPage';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, BarChart3 } from 'lucide-react';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 export interface CalendarEvent {
   id: string;
@@ -563,118 +564,126 @@ export const CalendarApp: React.FC = () => {
                 setIsModalOpen(true);
               });
             }}
+            onCreateNew={() => handleProtectedAction(() => createNewEvent())}
+            onOpenCommandSearch={() => setIsCommandOpen(true)}
+            suggestedEvents={suggestedEvents}
+            onSuggestedEventDrop={handleSuggestedEventDrop}
+            isLoggedIn={isLoggedIn}
+            onLogin={() => setShowLogin(true)}
           />
         );
     }
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-900">
-      <TopMenuBar 
-        onSearch={() => setIsCommandOpen(true)}
-        isLoggedIn={isLoggedIn}
-        onLogout={handleLogout}
-        onProfileClick={() => handleProtectedAction(() => setCurrentPage('profile'))}
-        onSettingsClick={() => handleProtectedAction(() => setCurrentPage('settings'))}
-        onLogin={() => setShowLogin(true)}
-      />
-      
-      <div className="flex flex-1 overflow-hidden">
-        <CalendarSidebar
+    <SidebarProvider>
+      <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-900 w-full">
+        <TopMenuBar 
+          onSearch={() => setIsCommandOpen(true)}
+          isLoggedIn={isLoggedIn}
+          onLogout={handleLogout}
+          onProfileClick={() => handleProtectedAction(() => setCurrentPage('profile'))}
+          onSettingsClick={() => handleProtectedAction(() => setCurrentPage('settings'))}
+          onLogin={() => setShowLogin(true)}
+        />
+        
+        <div className="flex flex-1 overflow-hidden">
+          <CalendarSidebar
+            events={events}
+            categories={categories}
+            setCategories={setCategories}
+            selectedCategories={selectedCategories}
+            setSelectedCategories={setSelectedCategories}
+            onEventClick={(event) => {
+              handleProtectedAction(() => {
+                setSelectedEvent(event);
+                setIsCreating(false);
+                setIsModalOpen(true);
+              });
+            }}
+            onOpenCommandSearch={() => setIsCommandOpen(true)}
+            onCreateNew={() => handleProtectedAction(() => {
+              setSelectedDate(new Date().toISOString().split('T')[0]);
+              setSelectedEndDate(new Date().toISOString().split('T')[0]);
+              setIsCreating(true);
+              setSelectedEvent(null);
+              setIsModalOpen(true);
+            })}
+            suggestedEvents={suggestedEvents}
+            onSuggestedEventDrop={handleSuggestedEventDrop}
+          />
+          
+          <div className="flex-1 flex flex-col">
+            <div className="border-b bg-white dark:bg-slate-800 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant={currentPage === 'dashboard' ? "default" : "outline"}
+                    onClick={() => setCurrentPage('dashboard')}
+                    className="gap-2"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    AI Dashboard
+                  </Button>
+                  <Button
+                    variant={currentPage === 'calendar' ? "default" : "outline"}
+                    onClick={() => setCurrentPage('calendar')}
+                    className="gap-2"
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                    Calendar
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-hidden">
+              {renderCurrentPage()}
+            </div>
+          </div>
+        </div>
+
+        <EventModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          event={selectedEvent}
+          isCreating={isCreating}
+          selectedDate={selectedDate}
+          selectedEndDate={selectedEndDate}
+          categories={categories}
+          onSave={saveEvent}
+          onDelete={deleteEvent}
+        />
+
+        <CommandSearch
+          isOpen={isCommandOpen}
+          onClose={() => setIsCommandOpen(false)}
           events={events}
           categories={categories}
-          setCategories={setCategories}
-          selectedCategories={selectedCategories}
-          setSelectedCategories={setSelectedCategories}
-          onEventClick={(event) => {
-            handleProtectedAction(() => {
-              setSelectedEvent(event);
-              setIsCreating(false);
-              setIsModalOpen(true);
-            });
+          onEventSelect={(event) => {
+            setSelectedEvent(event);
+            setIsCreating(false);
+            setIsModalOpen(true);
+            setIsCommandOpen(false);
           }}
-          onOpenCommandSearch={() => setIsCommandOpen(true)}
           onCreateNew={() => handleProtectedAction(() => {
             setSelectedDate(new Date().toISOString().split('T')[0]);
             setSelectedEndDate(new Date().toISOString().split('T')[0]);
             setIsCreating(true);
             setSelectedEvent(null);
             setIsModalOpen(true);
+            setIsCommandOpen(false);
           })}
-          suggestedEvents={suggestedEvents}
-          onSuggestedEventDrop={handleSuggestedEventDrop}
+          onProfileClick={() => handleProtectedAction(() => setCurrentPage('profile'))}
+          onSettingsClick={() => handleProtectedAction(() => setCurrentPage('settings'))}
         />
-        
-        <div className="flex-1 flex flex-col">
-          <div className="border-b bg-white dark:bg-slate-800 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant={currentPage === 'dashboard' ? "default" : "outline"}
-                  onClick={() => setCurrentPage('dashboard')}
-                  className="gap-2"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  AI Dashboard
-                </Button>
-                <Button
-                  variant={currentPage === 'calendar' ? "default" : "outline"}
-                  onClick={() => setCurrentPage('calendar')}
-                  className="gap-2"
-                >
-                  <CalendarIcon className="h-4 w-4" />
-                  Calendar
-                </Button>
-              </div>
-            </div>
-          </div>
 
-          <div className="flex-1 overflow-hidden">
-            {renderCurrentPage()}
-          </div>
-        </div>
+        <LoginModal
+          isOpen={showLogin}
+          onClose={() => setShowLogin(false)}
+          onLogin={handleLogin}
+        />
       </div>
-
-      <EventModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        event={selectedEvent}
-        isCreating={isCreating}
-        selectedDate={selectedDate}
-        selectedEndDate={selectedEndDate}
-        categories={categories}
-        onSave={saveEvent}
-        onDelete={deleteEvent}
-      />
-
-      <CommandSearch
-        isOpen={isCommandOpen}
-        onClose={() => setIsCommandOpen(false)}
-        events={events}
-        categories={categories}
-        onEventSelect={(event) => {
-          setSelectedEvent(event);
-          setIsCreating(false);
-          setIsModalOpen(true);
-          setIsCommandOpen(false);
-        }}
-        onCreateNew={() => handleProtectedAction(() => {
-          setSelectedDate(new Date().toISOString().split('T')[0]);
-          setSelectedEndDate(new Date().toISOString().split('T')[0]);
-          setIsCreating(true);
-          setSelectedEvent(null);
-          setIsModalOpen(true);
-          setIsCommandOpen(false);
-        })}
-        onProfileClick={() => handleProtectedAction(() => setCurrentPage('profile'))}
-        onSettingsClick={() => handleProtectedAction(() => setCurrentPage('settings'))}
-      />
-
-      <LoginModal
-        isOpen={showLogin}
-        onClose={() => setShowLogin(false)}
-        onLogin={handleLogin}
-      />
-    </div>
+    </SidebarProvider>
   );
 };

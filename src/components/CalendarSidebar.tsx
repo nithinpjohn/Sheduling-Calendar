@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Filter, Calendar, BarChart3, Users, Lightbulb, GripVertical, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,7 +42,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
-  const [currentSuggestions, setCurrentSuggestions] = useState(suggestedEvents);
+  const [currentSuggestions, setCurrentSuggestions] = useState<SuggestedEvent[]>(suggestedEvents || []);
 
   const upcomingEvents = events
     .filter(event => isFuture(parseISO(event.start)))
@@ -94,7 +93,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   };
 
   const shuffleSuggestions = () => {
-    const shuffled = [...currentSuggestions].sort(() => Math.random() - 0.5);
+    const shuffled = [...(currentSuggestions || [])].sort(() => Math.random() - 0.5);
     setCurrentSuggestions(shuffled);
   };
 
@@ -125,7 +124,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   };
 
   React.useEffect(() => {
-    setCurrentSuggestions(suggestedEvents);
+    setCurrentSuggestions(suggestedEvents || []);
   }, [suggestedEvents]);
 
   return (
@@ -242,7 +241,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               </div>
               <ScrollArea className="h-48">
                 <div className="space-y-2">
-                  {currentSuggestions.map((suggestedEvent) => {
+                  {(currentSuggestions || []).map((suggestedEvent) => {
                     const category = getCategory(suggestedEvent.category);
                     return (
                       <Card
