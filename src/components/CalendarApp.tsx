@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -28,6 +27,16 @@ export interface CalendarEvent {
   category: string;
   backgroundColor?: string;
   borderColor?: string;
+  videoConference?: {
+    platform: string;
+    link: string;
+    autoGenerate: boolean;
+  };
+  attendeeList?: Array<{
+    email: string;
+    status: 'pending' | 'accepted' | 'declined';
+    name?: string;
+  }>;
 }
 
 export interface EventCategory {
@@ -220,6 +229,10 @@ export const CalendarApp: React.FC = () => {
   });
 
   const handleDateClick = (arg: any) => {
+    if (!isLoggedIn) {
+      setShowLogin(true);
+      return;
+    }
     setSelectedDate(arg.dateStr);
     setIsCreating(true);
     setSelectedEvent(null);
@@ -227,6 +240,10 @@ export const CalendarApp: React.FC = () => {
   };
 
   const handleEventClick = (arg: any) => {
+    if (!isLoggedIn) {
+      setShowLogin(true);
+      return;
+    }
     const event = events.find(e => e.id === arg.event.id);
     if (event) {
       setSelectedEvent(event);
@@ -383,9 +400,29 @@ export const CalendarApp: React.FC = () => {
         eventDisplay="block"
         dayMaxEvents={true}
         weekends={true}
+        slotMinTime="00:00:00"
+        slotMaxTime="24:00:00"
+        slotDuration="01:00:00"
+        slotLabelInterval="01:00:00"
+        nowIndicator={true}
+        eventResizableFromStart={true}
         views={{
           dayGridMonth: {
             dayMaxEventRows: 3
+          },
+          timeGridWeek: {
+            slotLabelFormat: {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            }
+          },
+          timeGridDay: {
+            slotLabelFormat: {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            }
           }
         }}
       />
@@ -466,6 +503,7 @@ export const CalendarApp: React.FC = () => {
         onLogout={handleLogout}
         onProfileClick={() => handleProtectedAction(() => setCurrentPage('profile'))}
         onSettingsClick={() => handleProtectedAction(() => setCurrentPage('settings'))}
+        onLogin={() => setShowLogin(true)}
       />
       
       <div className="flex flex-1 overflow-hidden">

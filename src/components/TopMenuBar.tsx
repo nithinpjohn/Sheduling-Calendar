@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, Bell, User, Settings, LogOut, Monitor, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface TopMenuBarProps {
   onSearch: () => void;
@@ -18,6 +20,7 @@ interface TopMenuBarProps {
   onLogout: () => void;
   onProfileClick: () => void;
   onSettingsClick: () => void;
+  onLogin: () => void;
 }
 
 export const TopMenuBar: React.FC<TopMenuBarProps> = ({ 
@@ -25,13 +28,25 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
   isLoggedIn, 
   onLogout, 
   onProfileClick, 
-  onSettingsClick 
+  onSettingsClick,
+  onLogin
 }) => {
+  const [notificationTab, setNotificationTab] = useState('all');
+  
   const notifications = [
     { id: 1, title: 'Team Meeting in 30 minutes', type: 'reminder', unread: true },
     { id: 2, title: 'New event invitation from John', type: 'invitation', unread: true },
     { id: 3, title: 'Calendar sync completed', type: 'system', unread: false },
+    { id: 4, title: 'Reminder: Project deadline tomorrow', type: 'reminder', unread: false },
+    { id: 5, title: 'Meeting canceled by Sarah', type: 'system', unread: true },
+    { id: 6, title: 'Weekly report is ready', type: 'system', unread: false },
   ];
+
+  const filteredNotifications = notifications.filter(n => {
+    if (notificationTab === 'unread') return n.unread;
+    if (notificationTab === 'read') return !n.unread;
+    return true;
+  });
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
@@ -58,7 +73,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
 
         {/* Right Side - Notifications and Profile */}
         <div className="flex items-center space-x-4">
-          {isLoggedIn && (
+          {isLoggedIn ? (
             <>
               {/* Notifications */}
               <DropdownMenu>
@@ -72,22 +87,50 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80">
-                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-96">
+                  <div className="flex items-center justify-between p-3">
+                    <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+                    <Button variant="ghost" size="sm" className="text-xs">
+                      See All
+                    </Button>
+                  </div>
                   <DropdownMenuSeparator />
-                  {notifications.map((notification) => (
-                    <DropdownMenuItem key={notification.id} className="flex items-start space-x-2 p-3">
-                      <div className="flex-1">
-                        <p className={`text-sm ${notification.unread ? 'font-medium' : ''}`}>
-                          {notification.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground capitalize">{notification.type}</p>
-                      </div>
-                      {notification.unread && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-1"></div>
-                      )}
-                    </DropdownMenuItem>
-                  ))}
+                  
+                  <div className="p-2">
+                    <Tabs value={notificationTab} onValueChange={setNotificationTab}>
+                      <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+                        <TabsTrigger value="unread" className="text-xs">Unread</TabsTrigger>
+                        <TabsTrigger value="read" className="text-xs">Read</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value={notificationTab} className="mt-2">
+                        <div className="max-h-80 overflow-y-auto">
+                          {filteredNotifications.map((notification) => (
+                            <DropdownMenuItem key={notification.id} className="flex items-start space-x-2 p-3">
+                              <div className="flex-1">
+                                <p className={`text-sm ${notification.unread ? 'font-medium' : ''}`}>
+                                  {notification.title}
+                                </p>
+                                <p className="text-xs text-muted-foreground capitalize">{notification.type}</p>
+                              </div>
+                              {notification.unread && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full mt-1"></div>
+                              )}
+                            </DropdownMenuItem>
+                          ))}
+                        </div>
+                        
+                        {filteredNotifications.length > 5 && (
+                          <div className="border-t p-2 text-center">
+                            <Button variant="ghost" size="sm" className="text-xs">
+                              Load More
+                            </Button>
+                          </div>
+                        )}
+                      </TabsContent>
+                    </Tabs>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -117,6 +160,10 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
+          ) : (
+            <Button onClick={onLogin} className="gap-2">
+              Login
+            </Button>
           )}
         </div>
       </div>
