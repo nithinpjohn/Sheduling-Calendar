@@ -251,6 +251,11 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               <ScrollArea className="h-48">
                 <div className="space-y-2">
                   {suggestionsToRender.map((suggestedEvent) => {
+                    // Add safety checks for undefined suggestedEvent and its properties
+                    if (!suggestedEvent || !suggestedEvent.id || !suggestedEvent.title) {
+                      return null;
+                    }
+                    
                     const category = getCategory(suggestedEvent.category);
                     return (
                       <Card
@@ -267,11 +272,11 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                             <div className="flex-1 min-w-0">
                               <h4 className="font-medium text-sm truncate">{suggestedEvent.title}</h4>
                               <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                                {suggestedEvent.description}
+                                {suggestedEvent.description || ''}
                               </p>
                               <div className="flex items-center gap-2 mt-2">
                                 <Badge variant="secondary" className="text-xs rounded-lg">
-                                  {suggestedEvent.duration}h
+                                  {suggestedEvent.duration || 0}h
                                 </Badge>
                                 {suggestedEvent.defaultAttendees && (
                                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
