@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -192,6 +193,7 @@ export const CalendarApp: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'calendar' | 'profile' | 'settings'>('dashboard');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { toast } = useToast();
   const calendarRef = useRef<FullCalendar>(null);
 
@@ -571,6 +573,8 @@ export const CalendarApp: React.FC = () => {
             selectedCategories={selectedCategories}
             setSelectedCategories={setSelectedCategories}
             setCategories={setCategories}
+            isSidebarCollapsed={isSidebarCollapsed}
+            setIsSidebarCollapsed={setIsSidebarCollapsed}
           />
         );
     }
@@ -612,6 +616,7 @@ export const CalendarApp: React.FC = () => {
             })}
             suggestedEvents={suggestedEvents}
             onSuggestedEventDrop={handleSuggestedEventDrop}
+            isCollapsed={isSidebarCollapsed}
           />
           
           <div className="flex-1 flex flex-col">
