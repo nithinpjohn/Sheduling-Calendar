@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -182,6 +183,7 @@ export const CalendarApp: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedEndDate, setSelectedEndDate] = useState<string>('');
   const [currentView, setCurrentView] = useState('dayGridMonth');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -234,6 +236,19 @@ export const CalendarApp: React.FC = () => {
       return;
     }
     setSelectedDate(arg.dateStr);
+    setSelectedEndDate(arg.dateStr);
+    setIsCreating(true);
+    setSelectedEvent(null);
+    setIsModalOpen(true);
+  };
+
+  const handleDateSelect = (arg: any) => {
+    if (!isLoggedIn) {
+      setShowLogin(true);
+      return;
+    }
+    setSelectedDate(arg.startStr);
+    setSelectedEndDate(arg.endStr);
     setIsCreating(true);
     setSelectedEvent(null);
     setIsModalOpen(true);
@@ -331,6 +346,7 @@ export const CalendarApp: React.FC = () => {
 
   const createNewEvent = () => {
     setSelectedDate(new Date().toISOString().split('T')[0]);
+    setSelectedEndDate(new Date().toISOString().split('T')[0]);
     setIsCreating(true);
     setSelectedEvent(null);
     setIsModalOpen(true);
@@ -389,6 +405,7 @@ export const CalendarApp: React.FC = () => {
         }}
         events={calendarEvents}
         dateClick={handleDateClick}
+        select={handleDateSelect}
         eventClick={handleEventClick}
         eventDrop={handleEventDrop}
         eventResize={handleEventResize}
@@ -406,6 +423,7 @@ export const CalendarApp: React.FC = () => {
         slotLabelInterval="01:00:00"
         nowIndicator={true}
         eventResizableFromStart={true}
+        allDaySlot={false}
         views={{
           dayGridMonth: {
             dayMaxEventRows: 3
@@ -415,14 +433,16 @@ export const CalendarApp: React.FC = () => {
               hour: '2-digit',
               minute: '2-digit',
               hour12: false
-            }
+            },
+            allDaySlot: false
           },
           timeGridDay: {
             slotLabelFormat: {
               hour: '2-digit',
               minute: '2-digit',
               hour12: false
-            }
+            },
+            allDaySlot: false
           }
         }}
       />
@@ -523,6 +543,7 @@ export const CalendarApp: React.FC = () => {
           onOpenCommandSearch={() => setIsCommandOpen(true)}
           onCreateNew={() => handleProtectedAction(() => {
             setSelectedDate(new Date().toISOString().split('T')[0]);
+            setSelectedEndDate(new Date().toISOString().split('T')[0]);
             setIsCreating(true);
             setSelectedEvent(null);
             setIsModalOpen(true);
@@ -551,12 +572,6 @@ export const CalendarApp: React.FC = () => {
                   Calendar
                 </Button>
               </div>
-              
-              {!isLoggedIn && (
-                <Button onClick={() => setShowLogin(true)} className="gap-2">
-                  Login
-                </Button>
-              )}
             </div>
           </div>
 
@@ -572,6 +587,7 @@ export const CalendarApp: React.FC = () => {
         event={selectedEvent}
         isCreating={isCreating}
         selectedDate={selectedDate}
+        selectedEndDate={selectedEndDate}
         categories={categories}
         onSave={saveEvent}
         onDelete={deleteEvent}
@@ -590,6 +606,7 @@ export const CalendarApp: React.FC = () => {
         }}
         onCreateNew={() => handleProtectedAction(() => {
           setSelectedDate(new Date().toISOString().split('T')[0]);
+          setSelectedEndDate(new Date().toISOString().split('T')[0]);
           setIsCreating(true);
           setSelectedEvent(null);
           setIsModalOpen(true);
