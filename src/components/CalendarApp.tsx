@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -193,6 +192,7 @@ export const CalendarApp: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'calendar' | 'profile' | 'settings'>('dashboard');
   const { toast } = useToast();
+  const calendarRef = useRef<FullCalendar>(null);
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -371,7 +371,6 @@ export const CalendarApp: React.FC = () => {
   };
 
   const handleLogin = (email: string, password: string) => {
-    // Simulate login
     setIsLoggedIn(true);
     setShowLogin(false);
     toast({
@@ -389,6 +388,13 @@ export const CalendarApp: React.FC = () => {
     });
   };
 
+  const handleViewChange = (view: string) => {
+    setCurrentView(view);
+    if (calendarRef.current) {
+      calendarRef.current.getApi().changeView(view);
+    }
+  };
+
   const renderCalendarView = () => {
     if (currentView === 'gantt') {
       return <GanttView events={calendarEvents} categories={categories} />;
@@ -397,6 +403,7 @@ export const CalendarApp: React.FC = () => {
     return (
       <div className="h-full bg-white dark:bg-slate-800 rounded-lg shadow-sm">
         <FullCalendar
+          ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView={currentView}
           headerToolbar={{
@@ -452,11 +459,15 @@ export const CalendarApp: React.FC = () => {
             const draggedData = info.draggedEl.getAttribute('data-event');
             if (draggedData) {
               const eventData = JSON.parse(draggedData);
+              const endTime = new Date(info.date.getTime() + eventData.duration * 60 * 60 * 1000);
               const newEvent: CalendarEvent = {
-                ...eventData,
                 id: Date.now().toString(),
+                title: eventData.title,
                 start: info.date.toISOString(),
-                end: new Date(info.date.getTime() + eventData.duration * 60 * 60 * 1000).toISOString(),
+                end: endTime.toISOString(),
+                description: eventData.description,
+                category: eventData.category,
+                attendees: eventData.defaultAttendees,
                 backgroundColor: categories.find(c => c.id === eventData.category)?.color,
                 borderColor: categories.find(c => c.id === eventData.category)?.color,
               };
@@ -475,9 +486,17 @@ export const CalendarApp: React.FC = () => {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'profile':
-        return <ProfilePage />;
+        return (
+          <div className="h-full overflow-y-auto">
+            <ProfilePage />
+          </div>
+        );
       case 'settings':
-        return <SettingsPage />;
+        return (
+          <div className="h-full overflow-y-auto">
+            <SettingsPage />
+          </div>
+        );
       case 'calendar':
         return (
           <div className="h-full flex flex-col">
@@ -488,28 +507,28 @@ export const CalendarApp: React.FC = () => {
                   <Button
                     variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setCurrentView('dayGridMonth')}
+                    onClick={() => handleViewChange('dayGridMonth')}
                   >
                     Month
                   </Button>
                   <Button
                     variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setCurrentView('timeGridWeek')}
+                    onClick={() => handleViewChange('timeGridWeek')}
                   >
                     Week
                   </Button>
                   <Button
                     variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setCurrentView('timeGridDay')}
+                    onClick={() => handleViewChange('timeGridDay')}
                   >
                     Day
                   </Button>
                   <Button
                     variant={currentView === 'gantt' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setCurrentView('gantt')}
+                    onClick={() => handleViewChange('gantt')}
                   >
                     Gantt
                   </Button>
@@ -635,6 +654,8 @@ export const CalendarApp: React.FC = () => {
           setIsModalOpen(true);
           setIsCommandOpen(false);
         })}
+        onProfileClick={() => handleProtectedAction(() => setCurrentPage('profile'))}
+        onSettingsClick={() => handleProtectedAction(() => setCurrentPage('settings'))}
       />
 
       <LoginModal

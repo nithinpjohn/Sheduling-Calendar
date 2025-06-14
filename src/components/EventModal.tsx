@@ -190,7 +190,7 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isCreating ? 'Create New Event' : 'Edit Event'}
@@ -206,196 +206,198 @@ export const EventModal: React.FC<EventModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="h-full">
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+        <div className="flex-1 overflow-hidden">
+          <Tabs defaultValue="details" className="w-full h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-3 shrink-0">
               <TabsTrigger value="details">Event Details</TabsTrigger>
               <TabsTrigger value="video">Video Conference</TabsTrigger>
               <TabsTrigger value="attendees">Attendees</TabsTrigger>
             </TabsList>
             
-            <form onSubmit={handleSubmit}>
-              <TabsContent value="details" className="space-y-4 p-1">
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Event Title *</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="Enter event title"
-                      className={errors.title ? 'border-destructive' : ''}
-                    />
-                    {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category *</Label>
-                      <Select
-                        value={formData.category}
-                        onValueChange={(value) => setFormData({ ...formData, category: value })}
-                      >
-                        <SelectTrigger className={errors.category ? 'border-destructive' : ''}>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-3 h-3 rounded-full"
-                                  style={{ backgroundColor: category.color }}
-                                />
-                                {category.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.category && <p className="text-sm text-destructive">{errors.category}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Attendees
-                      </Label>
-                      <Input
-                        type="number"
-                        value={formData.attendees}
-                        onChange={(e) => setFormData({ ...formData, attendees: e.target.value })}
-                        placeholder="Number of attendees"
-                        min="0"
-                        className={errors.attendees ? 'border-destructive' : ''}
-                      />
-                      {errors.attendees && <p className="text-sm text-destructive">{errors.attendees}</p>}
-                    </div>
-                  </div>
-
-                  <Separator />
-
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-y-auto">
+                <TabsContent value="details" className="space-y-4 p-1 h-full">
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
-                      <Label>Start Date & Time *</Label>
-                      <div className="flex gap-2">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "flex-1 justify-start text-left font-normal",
-                                !formData.startDate && "text-muted-foreground"
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {formData.startDate ? format(formData.startDate, "PPP") : <span>Pick date</span>}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={formData.startDate}
-                              onSelect={(date) => date && setFormData({ ...formData, startDate: date })}
-                              initialFocus
-                              className="p-3 pointer-events-auto"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <div className="relative">
-                          <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            type="time"
-                            value={formData.startTime}
-                            onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                            className={`pl-10 w-32 ${errors.startTime ? 'border-destructive' : ''}`}
-                          />
-                        </div>
+                      <Label htmlFor="title">Event Title *</Label>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="Enter event title"
+                        className={errors.title ? 'border-destructive' : ''}
+                      />
+                      {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="category">Category *</Label>
+                        <Select
+                          value={formData.category}
+                          onValueChange={(value) => setFormData({ ...formData, category: value })}
+                        >
+                          <SelectTrigger className={errors.category ? 'border-destructive' : ''}>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-3 h-3 rounded-full"
+                                    style={{ backgroundColor: category.color }}
+                                  />
+                                  {category.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.category && <p className="text-sm text-destructive">{errors.category}</p>}
                       </div>
-                      {errors.startTime && <p className="text-sm text-destructive">{errors.startTime}</p>}
+
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Attendees
+                        </Label>
+                        <Input
+                          type="number"
+                          value={formData.attendees}
+                          onChange={(e) => setFormData({ ...formData, attendees: e.target.value })}
+                          placeholder="Number of attendees"
+                          min="0"
+                          className={errors.attendees ? 'border-destructive' : ''}
+                        />
+                        {errors.attendees && <p className="text-sm text-destructive">{errors.attendees}</p>}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <Label>Start Date & Time *</Label>
+                        <div className="flex gap-2">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "flex-1 justify-start text-left font-normal",
+                                  !formData.startDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {formData.startDate ? format(formData.startDate, "PPP") : <span>Pick date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={formData.startDate}
+                                onSelect={(date) => date && setFormData({ ...formData, startDate: date })}
+                                initialFocus
+                                className="p-3 pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <div className="relative">
+                            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                              type="time"
+                              value={formData.startTime}
+                              onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                              className={`pl-10 w-32 ${errors.startTime ? 'border-destructive' : ''}`}
+                            />
+                          </div>
+                        </div>
+                        {errors.startTime && <p className="text-sm text-destructive">{errors.startTime}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>End Date & Time *</Label>
+                        <div className="flex gap-2">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "flex-1 justify-start text-left font-normal",
+                                  !formData.endDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {formData.endDate ? format(formData.endDate, "PPP") : <span>Pick date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={formData.endDate}
+                                onSelect={(date) => date && setFormData({ ...formData, endDate: date })}
+                                initialFocus
+                                className="p-3 pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <div className="relative">
+                            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                              type="time"
+                              value={formData.endTime}
+                              onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                              className={`pl-10 w-32 ${errors.endTime ? 'border-destructive' : ''}`}
+                            />
+                          </div>
+                        </div>
+                        {errors.endTime && <p className="text-sm text-destructive">{errors.endTime}</p>}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label>End Date & Time *</Label>
-                      <div className="flex gap-2">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "flex-1 justify-start text-left font-normal",
-                                !formData.endDate && "text-muted-foreground"
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {formData.endDate ? format(formData.endDate, "PPP") : <span>Pick date</span>}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={formData.endDate}
-                              onSelect={(date) => date && setFormData({ ...formData, endDate: date })}
-                              initialFocus
-                              className="p-3 pointer-events-auto"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <div className="relative">
-                          <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            type="time"
-                            value={formData.endTime}
-                            onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                            className={`pl-10 w-32 ${errors.endTime ? 'border-destructive' : ''}`}
-                          />
-                        </div>
-                      </div>
-                      {errors.endTime && <p className="text-sm text-destructive">{errors.endTime}</p>}
+                      <Label htmlFor="location" className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        Location
+                      </Label>
+                      <Input
+                        id="location"
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        placeholder="Enter event location"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Enter event description"
+                        rows={3}
+                      />
                     </div>
                   </div>
+                </TabsContent>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="location" className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Location
-                    </Label>
-                    <Input
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="Enter event location"
-                    />
-                  </div>
+                <TabsContent value="video" className="space-y-4 p-1 h-full">
+                  <VideoConferenceForm
+                    value={videoConference}
+                    onChange={setVideoConference}
+                  />
+                </TabsContent>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Enter event description"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              </TabsContent>
+                <TabsContent value="attendees" className="space-y-4 p-1 h-full">
+                  <AttendeeManager
+                    attendees={attendeeList}
+                    onChange={setAttendeeList}
+                  />
+                </TabsContent>
+              </div>
 
-              <TabsContent value="video" className="space-y-4 p-1">
-                <VideoConferenceForm
-                  value={videoConference}
-                  onChange={setVideoConference}
-                />
-              </TabsContent>
-
-              <TabsContent value="attendees" className="space-y-4 p-1">
-                <AttendeeManager
-                  attendees={attendeeList}
-                  onChange={setAttendeeList}
-                />
-              </TabsContent>
-
-              <div className="flex justify-between pt-4 border-t">
+              <div className="flex justify-between pt-4 border-t shrink-0">
                 <div>
                   {!isCreating && (
                     <Button
@@ -421,7 +423,7 @@ export const EventModal: React.FC<EventModalProps> = ({
               </div>
             </form>
           </Tabs>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -20,7 +20,9 @@ import {
   Clock, 
   MapPin, 
   Users, 
-  ChevronRight 
+  ChevronRight,
+  User,
+  Settings
 } from 'lucide-react';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
 
@@ -31,6 +33,8 @@ interface CommandSearchProps {
   categories: EventCategory[];
   onEventSelect: (event: CalendarEvent) => void;
   onCreateNew: () => void;
+  onProfileClick: () => void;
+  onSettingsClick: () => void;
 }
 
 export const CommandSearch: React.FC<CommandSearchProps> = ({
@@ -40,6 +44,8 @@ export const CommandSearch: React.FC<CommandSearchProps> = ({
   categories,
   onEventSelect,
   onCreateNew,
+  onProfileClick,
+  onSettingsClick,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -54,7 +60,6 @@ export const CommandSearch: React.FC<CommandSearchProps> = ({
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         if (!isOpen) {
-          // Only open if not already open
           return;
         }
       }
@@ -99,6 +104,16 @@ export const CommandSearch: React.FC<CommandSearchProps> = ({
     onClose();
   };
 
+  const handleProfileClick = () => {
+    onProfileClick();
+    onClose();
+  };
+
+  const handleSettingsClick = () => {
+    onSettingsClick();
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden">
@@ -123,22 +138,46 @@ export const CommandSearch: React.FC<CommandSearchProps> = ({
               </div>
             </CommandEmpty>
 
-            {searchTerm && (
-              <CommandGroup heading="Actions">
-                <CommandItem onSelect={handleCreateNew} className="flex items-center gap-2 py-3">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground">
-                    <Plus className="h-4 w-4" />
+            <CommandGroup heading="Quick Actions">
+              <CommandItem onSelect={handleCreateNew} className="flex items-center gap-2 py-3">
+                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground">
+                  <Plus className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium">Create new event</div>
+                  <div className="text-sm text-muted-foreground">
+                    {searchTerm ? `Create "${searchTerm}"` : "Schedule a new event"}
                   </div>
-                  <div className="flex-1">
-                    <div className="font-medium">Create new event</div>
-                    <div className="text-sm text-muted-foreground">
-                      Create "{searchTerm}"
-                    </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CommandItem>
+              
+              <CommandItem onSelect={handleProfileClick} className="flex items-center gap-2 py-3">
+                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-secondary text-secondary-foreground">
+                  <User className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium">Profile Page</div>
+                  <div className="text-sm text-muted-foreground">
+                    View and edit your profile
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </CommandItem>
-              </CommandGroup>
-            )}
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CommandItem>
+              
+              <CommandItem onSelect={handleSettingsClick} className="flex items-center gap-2 py-3">
+                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-secondary text-secondary-foreground">
+                  <Settings className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium">Settings Page</div>
+                  <div className="text-sm text-muted-foreground">
+                    Configure application settings
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CommandItem>
+            </CommandGroup>
 
             {filteredEvents.length > 0 && (
               <CommandGroup heading={`Events (${filteredEvents.length})`}>
@@ -204,23 +243,6 @@ export const CommandSearch: React.FC<CommandSearchProps> = ({
                     </CommandItem>
                   );
                 })}
-              </CommandGroup>
-            )}
-
-            {!searchTerm && (
-              <CommandGroup heading="Quick Actions">
-                <CommandItem onSelect={handleCreateNew} className="flex items-center gap-2 py-3">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground">
-                    <Plus className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">Create new event</div>
-                    <div className="text-sm text-muted-foreground">
-                      Schedule a new event
-                    </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </CommandItem>
               </CommandGroup>
             )}
           </CommandList>

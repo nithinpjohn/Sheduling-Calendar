@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Search, Bell, User, Settings, LogOut, Monitor, Zap } from 'lucide-react';
+import { Search, Bell, User, Settings, LogOut, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,6 +13,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { ThemeToggle } from './ThemeToggle';
 
 interface TopMenuBarProps {
@@ -32,6 +42,8 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
   onLogin
 }) => {
   const [notificationTab, setNotificationTab] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
   
   const notifications = [
     { id: 1, title: 'Team Meeting in 30 minutes', type: 'reminder', unread: true },
@@ -40,6 +52,8 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
     { id: 4, title: 'Reminder: Project deadline tomorrow', type: 'reminder', unread: false },
     { id: 5, title: 'Meeting canceled by Sarah', type: 'system', unread: true },
     { id: 6, title: 'Weekly report is ready', type: 'system', unread: false },
+    { id: 7, title: 'New task assigned', type: 'system', unread: true },
+    { id: 8, title: 'Event reminder: Client call', type: 'reminder', unread: false },
   ];
 
   const filteredNotifications = notifications.filter(n => {
@@ -48,6 +62,9 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
     return true;
   });
 
+  const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedNotifications = filteredNotifications.slice(startIndex, startIndex + itemsPerPage);
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
@@ -77,28 +94,6 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
           
           {isLoggedIn ? (
             <>
-              {/* Quick Actions */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Zap className="h-4 w-4" />
-                    Quick Actions
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={onProfileClick}>
-                    <User className="mr-2 h-4 w-4" />
-                    Profile Page
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onSettingsClick}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings Page
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
               {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -121,7 +116,10 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                   <DropdownMenuSeparator />
                   
                   <div className="p-2">
-                    <Tabs value={notificationTab} onValueChange={setNotificationTab}>
+                    <Tabs value={notificationTab} onValueChange={(value) => {
+                      setNotificationTab(value);
+                      setCurrentPage(1);
+                    }}>
                       <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
                         <TabsTrigger value="unread" className="text-xs">Unread</TabsTrigger>
@@ -130,7 +128,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                       
                       <TabsContent value={notificationTab} className="mt-2">
                         <div className="max-h-80 overflow-y-auto">
-                          {filteredNotifications.map((notification) => (
+                          {paginatedNotifications.map((notification) => (
                             <DropdownMenuItem key={notification.id} className="flex items-start space-x-2 p-3">
                               <div className="flex-1">
                                 <p className={`text-sm ${notification.unread ? 'font-medium' : ''}`}>
@@ -145,11 +143,35 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                           ))}
                         </div>
                         
-                        {filteredNotifications.length > 5 && (
-                          <div className="border-t p-2 text-center">
-                            <Button variant="ghost" size="sm" className="text-xs">
-                              Load More
-                            </Button>
+                        {totalPages > 1 && (
+                          <div className="border-t p-2">
+                            <Pagination>
+                              <PaginationContent>
+                                <PaginationItem>
+                                  <PaginationPrevious 
+                                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                  />
+                                </PaginationItem>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                  <PaginationItem key={page}>
+                                    <PaginationLink
+                                      onClick={() => setCurrentPage(page)}
+                                      isActive={currentPage === page}
+                                      className="cursor-pointer"
+                                    >
+                                      {page}
+                                    </PaginationLink>
+                                  </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                  <PaginationNext 
+                                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                  />
+                                </PaginationItem>
+                              </PaginationContent>
+                            </Pagination>
                           </div>
                         )}
                       </TabsContent>
