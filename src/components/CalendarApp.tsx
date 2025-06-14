@@ -395,6 +395,26 @@ export const CalendarApp: React.FC = () => {
     }
   };
 
+  const handleSuggestedEventDrop = (eventData: SuggestedEvent, date: Date) => {
+    const endTime = new Date(date.getTime() + eventData.duration * 60 * 60 * 1000);
+    const newEvent: CalendarEvent = {
+      id: Date.now().toString(),
+      title: eventData.title,
+      start: date.toISOString(),
+      end: endTime.toISOString(),
+      description: eventData.description,
+      category: eventData.category,
+      attendees: eventData.defaultAttendees,
+      backgroundColor: categories.find(c => c.id === eventData.category)?.color,
+      borderColor: categories.find(c => c.id === eventData.category)?.color,
+    };
+    setEvents([...events, newEvent]);
+    toast({
+      title: "Event Created",
+      description: `"${newEvent.title}" has been added to your calendar.`,
+    });
+  };
+
   const renderCalendarView = () => {
     if (currentView === 'gantt') {
       return <GanttView events={calendarEvents} categories={categories} />;
@@ -457,28 +477,12 @@ export const CalendarApp: React.FC = () => {
           }}
           drop={(info) => {
             try {
-              const draggedData = info.dataTransfer.getData('application/json');
+              // Get the data from the dragged element
+              const draggedData = info.draggedEl.getAttribute('data-suggested-event');
               if (draggedData) {
                 const parsed = JSON.parse(draggedData);
                 if (parsed.type === 'suggested-event' && parsed.data) {
-                  const eventData = parsed.data;
-                  const endTime = new Date(info.date.getTime() + eventData.duration * 60 * 60 * 1000);
-                  const newEvent: CalendarEvent = {
-                    id: Date.now().toString(),
-                    title: eventData.title,
-                    start: info.date.toISOString(),
-                    end: endTime.toISOString(),
-                    description: eventData.description,
-                    category: eventData.category,
-                    attendees: eventData.defaultAttendees,
-                    backgroundColor: categories.find(c => c.id === eventData.category)?.color,
-                    borderColor: categories.find(c => c.id === eventData.category)?.color,
-                  };
-                  setEvents([...events, newEvent]);
-                  toast({
-                    title: "Event Created",
-                    description: `"${newEvent.title}" has been added to your calendar.`,
-                  });
+                  handleSuggestedEventDrop(parsed.data, info.date);
                 }
               }
             } catch (error) {
@@ -598,6 +602,7 @@ export const CalendarApp: React.FC = () => {
             setIsModalOpen(true);
           })}
           suggestedEvents={suggestedEvents}
+          onSuggestedEventDrop={handleSuggestedEventDrop}
         />
         
         <div className="flex-1 flex flex-col">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Filter, Calendar, BarChart3, Users, Lightbulb, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,7 @@ interface CalendarSidebarProps {
   onOpenCommandSearch: () => void;
   onCreateNew: () => void;
   suggestedEvents: SuggestedEvent[];
+  onSuggestedEventDrop: (eventData: SuggestedEvent, date: Date) => void;
 }
 
 export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
@@ -36,6 +36,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   onOpenCommandSearch,
   onCreateNew,
   suggestedEvents,
+  onSuggestedEventDrop,
 }) => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
@@ -90,10 +91,16 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   };
 
   const handleDragStart = (e: React.DragEvent, suggestedEvent: SuggestedEvent) => {
-    e.dataTransfer.setData('application/json', JSON.stringify({
+    // Store the event data as an attribute on the dragged element
+    const dragData = JSON.stringify({
       type: 'suggested-event',
       data: suggestedEvent
-    }));
+    });
+    e.dataTransfer.setData('text/plain', dragData);
+    // Also store it as an attribute for FullCalendar compatibility
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.setAttribute('data-suggested-event', dragData);
+    }
   };
 
   return (
