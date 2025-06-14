@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -10,6 +9,9 @@ import { CommandSearch } from './CommandSearch';
 import { SummaryPage } from './SummaryPage';
 import { GanttView } from './GanttView';
 import { TopMenuBar } from './TopMenuBar';
+import { LoginModal } from './LoginModal';
+import { ProfilePage } from './ProfilePage';
+import { SettingsPage } from './SettingsPage';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, BarChart3 } from 'lucide-react';
@@ -174,7 +176,10 @@ export const CalendarApp: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
-  const [showSummary, setShowSummary] = useState(true); // Default to AI summary
+  const [showSummary, setShowSummary] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'calendar' | 'profile' | 'settings'>('dashboard');
   const { toast } = useToast();
 
   // Load data from localStorage on component mount
@@ -323,6 +328,33 @@ export const CalendarApp: React.FC = () => {
     borderColor: categories.find(c => c.id === event.category)?.color,
   }));
 
+  const handleProtectedAction = (action: () => void) => {
+    if (!isLoggedIn) {
+      setShowLogin(true);
+    } else {
+      action();
+    }
+  };
+
+  const handleLogin = (email: string, password: string) => {
+    // Simulate login
+    setIsLoggedIn(true);
+    setShowLogin(false);
+    toast({
+      title: "Login Successful",
+      description: "Welcome back!",
+    });
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentPage('dashboard');
+    toast({
+      title: "Logged Out",
+      description: "You have been logged out successfully.",
+    });
+  };
+
   const renderCalendarView = () => {
     if (currentView === 'gantt') {
       return <GanttView events={calendarEvents} categories={categories} />;
@@ -359,104 +391,127 @@ export const CalendarApp: React.FC = () => {
     );
   };
 
+  const renderCurrentPage = () => {
+    switch (currentPage) {
+      case 'profile':
+        return <ProfilePage />;
+      case 'settings':
+        return <SettingsPage />;
+      case 'calendar':
+        return (
+          <div className="h-full">
+            <div className="border-b bg-card p-4">
+              <div className="flex items-center justify-end space-x-2">
+                <Button
+                  variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentView('dayGridMonth')}
+                >
+                  Month
+                </Button>
+                <Button
+                  variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentView('timeGridWeek')}
+                >
+                  Week
+                </Button>
+                <Button
+                  variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentView('timeGridDay')}
+                >
+                  Day
+                </Button>
+                <Button
+                  variant={currentView === 'gantt' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentView('gantt')}
+                >
+                  Gantt
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 p-6">
+              {renderCalendarView()}
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <SummaryPage 
+            events={events}
+            categories={categories}
+            onEventClick={(event) => {
+              handleProtectedAction(() => {
+                setSelectedEvent(event);
+                setIsCreating(false);
+                setIsModalOpen(true);
+              });
+            }}
+          />
+        );
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background">
-      <TopMenuBar onSearch={openCommandSearch} />
+      <TopMenuBar 
+        onSearch={() => setIsCommandOpen(true)}
+        isLoggedIn={isLoggedIn}
+        onLogout={handleLogout}
+        onProfileClick={() => handleProtectedAction(() => setCurrentPage('profile'))}
+        onSettingsClick={() => handleProtectedAction(() => setCurrentPage('settings'))}
+      />
       
       <div className="flex flex-1 overflow-hidden">
         <CalendarSidebar
           events={events}
           categories={categories}
           setCategories={setCategories}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
           selectedCategories={selectedCategories}
           setSelectedCategories={setSelectedCategories}
           onEventClick={(event) => {
-            setSelectedEvent(event);
-            setIsCreating(false);
-            setIsModalOpen(true);
+            handleProtectedAction(() => {
+              setSelectedEvent(event);
+              setIsCreating(false);
+              setIsModalOpen(true);
+            });
           }}
-          onOpenCommandSearch={openCommandSearch}
-          onCreateNew={createNewEvent}
+          onOpenCommandSearch={() => setIsCommandOpen(true)}
+          onCreateNew={() => handleProtectedAction(() => {
+            setSelectedDate(new Date().toISOString().split('T')[0]);
+            setIsCreating(true);
+            setSelectedEvent(null);
+            setIsModalOpen(true);
+          })}
           suggestedEvents={suggestedEvents}
-          showSummary={showSummary}
-          setShowSummary={setShowSummary}
         />
         
         <div className="flex-1 flex flex-col">
           <div className="border-b bg-card p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant={showSummary ? "default" : "outline"}
-                  onClick={() => setShowSummary(true)}
-                  className="gap-2"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  AI Dashboard
-                </Button>
-                <Button
-                  variant={!showSummary ? "default" : "outline"}
-                  onClick={() => setShowSummary(false)}
-                  className="gap-2"
-                >
-                  <CalendarIcon className="h-4 w-4" />
-                  Calendar
-                </Button>
-              </div>
-              
-              {!showSummary && (
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCurrentView('dayGridMonth')}
-                  >
-                    Month
-                  </Button>
-                  <Button
-                    variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCurrentView('timeGridWeek')}
-                  >
-                    Week
-                  </Button>
-                  <Button
-                    variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCurrentView('timeGridDay')}
-                  >
-                    Day
-                  </Button>
-                  <Button
-                    variant={currentView === 'gantt' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCurrentView('gantt')}
-                  >
-                    Gantt
-                  </Button>
-                </div>
-              )}
+            <div className="flex items-center space-x-4">
+              <Button
+                variant={currentPage === 'dashboard' ? "default" : "outline"}
+                onClick={() => setCurrentPage('dashboard')}
+                className="gap-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                AI Dashboard
+              </Button>
+              <Button
+                variant={currentPage === 'calendar' ? "default" : "outline"}
+                onClick={() => setCurrentPage('calendar')}
+                className="gap-2"
+              >
+                <CalendarIcon className="h-4 w-4" />
+                Calendar
+              </Button>
             </div>
           </div>
 
-          <div className="flex-1 p-6">
-            <div className="h-full">
-              {showSummary ? (
-                <SummaryPage 
-                  events={events}
-                  categories={categories}
-                  onEventClick={(event) => {
-                    setSelectedEvent(event);
-                    setIsCreating(false);
-                    setIsModalOpen(true);
-                  }}
-                />
-              ) : (
-                renderCalendarView()
-              )}
-            </div>
+          <div className="flex-1">
+            {renderCurrentPage()}
           </div>
         </div>
       </div>
@@ -483,7 +538,19 @@ export const CalendarApp: React.FC = () => {
           setIsModalOpen(true);
           setIsCommandOpen(false);
         }}
-        onCreateNew={createNewEvent}
+        onCreateNew={() => handleProtectedAction(() => {
+          setSelectedDate(new Date().toISOString().split('T')[0]);
+          setIsCreating(true);
+          setSelectedEvent(null);
+          setIsModalOpen(true);
+          setIsCommandOpen(false);
+        })}
+      />
+
+      <LoginModal
+        isOpen={showLogin}
+        onClose={() => setShowLogin(false)}
+        onLogin={handleLogin}
       />
     </div>
   );

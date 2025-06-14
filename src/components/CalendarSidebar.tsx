@@ -1,13 +1,11 @@
-
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Calendar, BarChart3, Users, Lightbulb, GripVertical } from 'lucide-react';
+import { Plus, Filter, Calendar, BarChart3, Users, Lightbulb, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CalendarEvent, EventCategory, SuggestedEvent } from './CalendarApp';
-import { format, parseISO, isToday, isTomorrow, isPast, isFuture } from 'date-fns';
+import { format, parseISO, isToday, isTomorrow, isFuture } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { ColorPicker } from './ColorPicker';
@@ -18,24 +16,18 @@ interface CalendarSidebarProps {
   events: CalendarEvent[];
   categories: EventCategory[];
   setCategories: (categories: EventCategory[]) => void;
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
   selectedCategories: string[];
   setSelectedCategories: (categories: string[]) => void;
   onEventClick: (event: CalendarEvent) => void;
   onOpenCommandSearch: () => void;
   onCreateNew: () => void;
   suggestedEvents: SuggestedEvent[];
-  showSummary: boolean;
-  setShowSummary: (show: boolean) => void;
 }
 
 export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   events,
   categories,
   setCategories,
-  searchTerm,
-  setSearchTerm,
   selectedCategories,
   setSelectedCategories,
   onEventClick,
@@ -110,22 +102,6 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
           <Plus className="h-4 w-4" />
           Create Event
         </Button>
-
-        {/* Search */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Search Events</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search or press ⌘K"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onClick={onOpenCommandSearch}
-              className="pl-10 cursor-pointer"
-              readOnly
-            />
-          </div>
-        </div>
 
         {/* Categories */}
         <div className="space-y-3">
