@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Filter, Calendar, BarChart3, Users, Lightbulb, GripVertical, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -93,7 +94,8 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   };
 
   const shuffleSuggestions = () => {
-    const shuffled = [...(currentSuggestions || [])].sort(() => Math.random() - 0.5);
+    const suggestions = currentSuggestions || suggestedEvents || [];
+    const shuffled = [...suggestions].sort(() => Math.random() - 0.5);
     setCurrentSuggestions(shuffled);
   };
 
@@ -126,6 +128,9 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   React.useEffect(() => {
     setCurrentSuggestions(suggestedEvents || []);
   }, [suggestedEvents]);
+
+  // Safely get suggestions to render
+  const suggestionsToRender = currentSuggestions || suggestedEvents || [];
 
   return (
     <Sidebar>
@@ -241,7 +246,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               </div>
               <ScrollArea className="h-48">
                 <div className="space-y-2">
-                  {(currentSuggestions || []).map((suggestedEvent) => {
+                  {suggestionsToRender.map((suggestedEvent) => {
                     const category = getCategory(suggestedEvent.category);
                     return (
                       <Card
