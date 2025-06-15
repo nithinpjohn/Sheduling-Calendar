@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, AlignHorizontalSpaceAround } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -12,7 +12,6 @@ import { ThemeToggle } from './ThemeToggle';
 import { NotificationDropdown } from './NotificationDropdown';
 import { ProfileDropdown } from './ProfileDropdown';
 import { NavigationButtons } from './NavigationButtons';
-import { LayoutSelector } from './LayoutSelector';
 import { SearchBar } from './SearchBar';
 
 interface TopMenuBarProps {
@@ -86,10 +85,21 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
           <div className="flex items-center space-x-2">
             <SearchBar onSearch={onSearch} />
             
-            <LayoutSelector
-              currentView={currentView}
-              onViewChange={onViewChange}
-            />
+            {onLayoutToggle && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onLayoutToggle}
+                    className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <AlignHorizontalSpaceAround className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Layout Options</TooltipContent>
+              </Tooltip>
+            )}
             
             <Tooltip>
               <TooltipTrigger asChild>
