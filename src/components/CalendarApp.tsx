@@ -180,6 +180,107 @@ const sampleEvents: CalendarEvent[] = [
     location: 'Backyard',
     attendees: 12,
     category: '5'
+  },
+  // New June 2025 events
+  {
+    id: '12',
+    title: 'Product Launch Meeting',
+    start: '2025-06-03T14:00:00',
+    end: '2025-06-03T15:30:00',
+    description: 'Final preparations for product launch',
+    location: 'Executive Conference Room',
+    attendees: 10,
+    category: '1'
+  },
+  {
+    id: '13',
+    title: 'Marketing Strategy Session',
+    start: '2025-06-05T10:00:00',
+    end: '2025-06-05T12:00:00',
+    description: 'Q3 marketing campaign planning',
+    location: 'Marketing Department',
+    attendees: 8,
+    category: '1'
+  },
+  {
+    id: '14',
+    title: 'Eye Exam',
+    start: '2025-06-07T13:30:00',
+    end: '2025-06-07T14:30:00',
+    description: 'Annual eye examination',
+    location: 'Vision Care Center',
+    attendees: 2,
+    category: '2'
+  },
+  {
+    id: '15',
+    title: 'Cybersecurity Workshop',
+    start: '2025-06-10T09:00:00',
+    end: '2025-06-10T17:00:00',
+    description: 'Advanced cybersecurity best practices training',
+    location: 'Security Training Center',
+    attendees: 20,
+    category: '3'
+  },
+  {
+    id: '16',
+    title: 'Client Onboarding',
+    start: '2025-06-12T11:00:00',
+    end: '2025-06-12T12:30:00',
+    description: 'New client welcome and setup meeting',
+    location: 'Client Services Room',
+    attendees: 5,
+    category: '2'
+  },
+  {
+    id: '17',
+    title: 'AI & Machine Learning Summit',
+    start: '2025-06-18T08:30:00',
+    end: '2025-06-18T17:30:00',
+    description: 'Industry summit on AI trends and innovations',
+    location: 'Tech Convention Center',
+    attendees: 300,
+    category: '4'
+  },
+  {
+    id: '18',
+    title: 'Team Building Retreat',
+    start: '2025-06-21T09:00:00',
+    end: '2025-06-21T16:00:00',
+    description: 'Outdoor team building activities and lunch',
+    location: 'Mountain View Park',
+    attendees: 15,
+    category: '5'
+  },
+  {
+    id: '19',
+    title: 'Budget Review Meeting',
+    start: '2025-06-24T15:00:00',
+    end: '2025-06-24T16:00:00',
+    description: 'Q2 budget analysis and Q3 planning',
+    location: 'Finance Conference Room',
+    attendees: 7,
+    category: '1'
+  },
+  {
+    id: '20',
+    title: 'Photography Workshop',
+    start: '2025-06-26T10:00:00',
+    end: '2025-06-26T15:00:00',
+    description: 'Professional photography techniques workshop',
+    location: 'Creative Studio',
+    attendees: 12,
+    category: '3'
+  },
+  {
+    id: '21',
+    title: 'Weekend Getaway',
+    start: '2025-06-29T18:00:00',
+    end: '2025-06-29T20:00:00',
+    description: 'Weekend trip departure preparation',
+    location: 'Home',
+    attendees: 4,
+    category: '5'
   }
 ];
 
