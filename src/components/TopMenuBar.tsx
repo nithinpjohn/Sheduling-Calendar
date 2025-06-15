@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Search, Bell, User, Settings, LogOut, Monitor, CalendarIcon, BarChart3, Mail, PanelLeftClose, PanelLeftOpen, AlignHorizontalSpaceAround } from 'lucide-react';
+import { Search, Bell, User, Settings, LogOut, Monitor, CalendarIcon, BarChart3, Mail, PanelLeftClose, PanelLeftOpen, AlignHorizontalSpaceAround, Grid, List, Calendar as CalendarView, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -11,6 +10,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -36,6 +46,8 @@ interface TopMenuBarProps {
   isSidebarCollapsed: boolean;
   onToggleSidebar: () => void;
   onLayoutToggle?: () => void;
+  currentView?: string;
+  onViewChange?: (view: string) => void;
 }
 
 export const TopMenuBar: React.FC<TopMenuBarProps> = ({ 
@@ -49,7 +61,9 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
   onPageChange,
   isSidebarCollapsed,
   onToggleSidebar,
-  onLayoutToggle
+  onLayoutToggle,
+  currentView = 'dayGridMonth',
+  onViewChange
 }) => {
   const [notificationTab, setNotificationTab] = useState('all');
   const [currentPageNum, setCurrentPageNum] = useState(1);
@@ -85,200 +99,295 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
     }
   };
 
+  const layoutOptions = [
+    { id: 'dayGridMonth', label: 'Month View', icon: Grid },
+    { id: 'timeGridWeek', label: 'Week View', icon: CalendarView },
+    { id: 'timeGridDay', label: 'Day View', icon: Clock },
+    { id: 'listWeek', label: 'List View', icon: List },
+  ];
+
   return (
-    <header className="border-b bg-white dark:bg-slate-800 shadow-sm">
-      <div className="flex items-center justify-between px-6 py-3">
-        {/* Logo and Toggle Section */}
-        <div className="flex items-center space-x-4 w-64">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleSidebar}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-          >
-            {isSidebarCollapsed ? (
-              <PanelLeftOpen className="h-4 w-4" />
-            ) : (
-              <PanelLeftClose className="h-4 w-4" />
-            )}
-          </Button>
-          <h1 className="text-2xl font-bold text-primary">Scede</h1>
-        </div>
-
-        {/* Center Navigation */}
-        <div className="flex items-center space-x-2">
-          <Button
-            variant={currentPage === 'dashboard' ? "default" : "outline"}
-            onClick={() => onPageChange('dashboard')}
-            className="gap-2 rounded-lg"
-          >
-            <BarChart3 className="h-4 w-4" />
-            AI Dashboard
-          </Button>
-          <Button
-            variant={currentPage === 'calendar' ? "default" : "outline"}
-            onClick={() => onPageChange('calendar')}
-            className="gap-2 rounded-lg"
-          >
-            <CalendarIcon className="h-4 w-4" />
-            Calendar
-          </Button>
-          <Button
-            variant={currentPage === 'mails' ? "default" : "outline"}
-            onClick={() => handleProtectedAction(() => onPageChange('mails'))}
-            className="gap-2 rounded-lg"
-          >
-            <Mail className="h-4 w-4" />
-            My Mails
-          </Button>
-        </div>
-
-        {/* Right Side - Search, Layout, Theme, Notifications and Profile */}
-        <div className="flex items-center space-x-2">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search... (⌘K)"
-              className="pl-10 cursor-pointer bg-white dark:bg-slate-700 w-64"
-              onClick={onSearch}
-              readOnly
-            />
+    <TooltipProvider>
+      <header className="border-b bg-white dark:bg-slate-800 shadow-sm">
+        <div className="flex items-center justify-between px-6 py-3">
+          {/* Logo and Toggle Section */}
+          <div className="flex items-center space-x-4 w-64">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleSidebar}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                >
+                  {isSidebarCollapsed ? (
+                    <PanelLeftOpen className="h-4 w-4" />
+                  ) : (
+                    <PanelLeftClose className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+              </TooltipContent>
+            </Tooltip>
+            <h1 className="text-2xl font-bold text-primary">Scede</h1>
           </div>
-          
-          {/* Layout Toggle */}
-          {onLayoutToggle && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onLayoutToggle}
-              className="hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <AlignHorizontalSpaceAround className="h-5 w-5" />
-            </Button>
-          )}
-          
-          <ThemeToggle />
-          
-          {isLoggedIn ? (
-            <>
-              {/* Notifications */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-5 w-5" />
-                    {unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></div>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-96 bg-white dark:bg-slate-800">
-                  <div className="flex items-center justify-between p-3">
-                    <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
-                    <Button variant="ghost" size="sm" className="text-xs">
-                      See All
-                    </Button>
-                  </div>
-                  <DropdownMenuSeparator />
-                  
-                  <div className="p-2">
-                    <Tabs value={notificationTab} onValueChange={(value) => {
-                      setNotificationTab(value);
-                      setCurrentPageNum(1);
-                    }}>
-                      <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-                        <TabsTrigger value="unread" className="text-xs">Unread</TabsTrigger>
-                        <TabsTrigger value="read" className="text-xs">Read</TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value={notificationTab} className="mt-2">
-                        <div className="max-h-80 overflow-y-auto">
-                          {paginatedNotifications.map((notification) => (
-                            <DropdownMenuItem key={notification.id} className="flex items-start space-x-2 p-3">
-                              <div className="flex-1">
-                                <p className={`text-sm ${notification.unread ? 'font-medium' : ''}`}>
-                                  {notification.title}
-                                </p>
-                                <p className="text-xs text-muted-foreground capitalize">{notification.type}</p>
-                              </div>
-                              {notification.unread && (
-                                <div className="w-2 h-2 bg-blue-500 rounded-full mt-1"></div>
-                              )}
-                            </DropdownMenuItem>
-                          ))}
-                        </div>
-                        
-                        {totalPages > 1 && (
-                          <div className="border-t p-2">
-                            <Pagination>
-                              <PaginationContent>
-                                <PaginationItem>
-                                  <PaginationPrevious 
-                                    onClick={() => setCurrentPageNum(Math.max(1, currentPageNum - 1))}
-                                    className={currentPageNum === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                                  />
-                                </PaginationItem>
-                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                  <PaginationItem key={page}>
-                                    <PaginationLink
-                                      onClick={() => setCurrentPageNum(page)}
-                                      isActive={currentPageNum === page}
-                                      className="cursor-pointer"
-                                    >
-                                      {page}
-                                    </PaginationLink>
-                                  </PaginationItem>
-                                ))}
-                                <PaginationItem>
-                                  <PaginationNext 
-                                    onClick={() => setCurrentPageNum(Math.min(totalPages, currentPageNum + 1))}
-                                    className={currentPageNum === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                                  />
-                                </PaginationItem>
-                              </PaginationContent>
-                            </Pagination>
-                          </div>
-                        )}
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
 
-              {/* Profile Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <User className="h-5 w-5" />
+          {/* Center Navigation */}
+          <div className="flex items-center space-x-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={currentPage === 'dashboard' ? "default" : "outline"}
+                  onClick={() => onPageChange('dashboard')}
+                  className="gap-2 rounded-lg"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  AI Dashboard
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>AI Dashboard</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={currentPage === 'calendar' ? "default" : "outline"}
+                  onClick={() => onPageChange('calendar')}
+                  className="gap-2 rounded-lg"
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                  Calendar
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Calendar</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={currentPage === 'mails' ? "default" : "outline"}
+                  onClick={() => handleProtectedAction(() => onPageChange('mails'))}
+                  className="gap-2 rounded-lg"
+                >
+                  <Mail className="h-4 w-4" />
+                  My Mails
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>My Mails</TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* Right Side - Search, Layout, Theme, Notifications and Profile */}
+          <div className="flex items-center space-x-2">
+            {/* Search Bar */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Search... (⌘K)"
+                    className="pl-10 cursor-pointer bg-white dark:bg-slate-700 w-64"
+                    onClick={onSearch}
+                    readOnly
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Search (⌘K)</TooltipContent>
+            </Tooltip>
+            
+            {/* Layout Toggle with Popover */}
+            {onViewChange && (
+              <Popover>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <AlignHorizontalSpaceAround className="h-5 w-5" />
+                      </Button>
+                    </PopoverTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Layout Options</TooltipContent>
+                </Tooltip>
+                <PopoverContent className="w-56 bg-white dark:bg-slate-800" align="end">
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm mb-3">Layout Options</h4>
+                    {layoutOptions.map((option) => {
+                      const IconComponent = option.icon;
+                      return (
+                        <Button
+                          key={option.id}
+                          variant={currentView === option.id ? "default" : "ghost"}
+                          className="w-full justify-start gap-2"
+                          onClick={() => onViewChange(option.id)}
+                        >
+                          <IconComponent className="h-4 w-4" />
+                          {option.label}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+            
+            <ThemeToggle />
+            
+            {isLoggedIn ? (
+              <>
+                {/* Notifications */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="relative">
+                        <Bell className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                          <div className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></div>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Notifications</TooltipContent>
+                </Tooltip>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="h-5 w-5" />
+                      {unreadCount > 0 && (
+                        <div className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></div>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-96 bg-white dark:bg-slate-800">
+                    <div className="flex items-center justify-between p-3">
+                      <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+                      <Button variant="ghost" size="sm" className="text-xs">
+                        See All
+                      </Button>
+                    </div>
+                    <DropdownMenuSeparator />
+                    
+                    <div className="p-2">
+                      <Tabs value={notificationTab} onValueChange={(value) => {
+                        setNotificationTab(value);
+                        setCurrentPageNum(1);
+                      }}>
+                        <TabsList className="grid w-full grid-cols-3">
+                          <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+                          <TabsTrigger value="unread" className="text-xs">Unread</TabsTrigger>
+                          <TabsTrigger value="read" className="text-xs">Read</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value={notificationTab} className="mt-2">
+                          <div className="max-h-80 overflow-y-auto">
+                            {paginatedNotifications.map((notification) => (
+                              <DropdownMenuItem key={notification.id} className="flex items-start space-x-2 p-3">
+                                <div className="flex-1">
+                                  <p className={`text-sm ${notification.unread ? 'font-medium' : ''}`}>
+                                    {notification.title}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground capitalize">{notification.type}</p>
+                                </div>
+                                {notification.unread && (
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-1"></div>
+                                )}
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                          
+                          {totalPages > 1 && (
+                            <div className="border-t p-2">
+                              <Pagination>
+                                <PaginationContent>
+                                  <PaginationItem>
+                                    <PaginationPrevious 
+                                      onClick={() => setCurrentPageNum(Math.max(1, currentPageNum - 1))}
+                                      className={currentPageNum === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                    />
+                                  </PaginationItem>
+                                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                    <PaginationItem key={page}>
+                                      <PaginationLink
+                                        onClick={() => setCurrentPageNum(page)}
+                                        isActive={currentPageNum === page}
+                                        className="cursor-pointer"
+                                      >
+                                        {page}
+                                      </PaginationLink>
+                                    </PaginationItem>
+                                  ))}
+                                  <PaginationItem>
+                                    <PaginationNext 
+                                      onClick={() => setCurrentPageNum(Math.min(totalPages, currentPageNum + 1))}
+                                      className={currentPageNum === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                    />
+                                  </PaginationItem>
+                                </PaginationContent>
+                              </Pagination>
+                            </div>
+                          )}
+                        </TabsContent>
+                      </Tabs>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Profile Menu */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <User className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Profile Menu</TooltipContent>
+                </Tooltip>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-slate-800">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onProfileClick}>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={onSettingsClick}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Application Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600" onClick={onLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={onLogin} className="gap-2">
+                    Login
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-slate-800">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={onProfileClick}>
-                    <User className="mr-2 h-4 w-4" />
-                    Profile Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onSettingsClick}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Application Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600" onClick={onLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          ) : (
-            <Button onClick={onLogin} className="gap-2">
-              Login
-            </Button>
-          )}
+                </TooltipTrigger>
+                <TooltipContent>Login to your account</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </TooltipProvider>
   );
 };
