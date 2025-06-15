@@ -623,6 +623,10 @@ export const CalendarApp: React.FC = () => {
           onPageChange={setCurrentPage}
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          onLayoutToggle={() => {
+            // Handle layout toggle functionality here
+            console.log('Layout toggle clicked');
+          }}
         />
         
         <div className="flex flex-1 overflow-hidden">
