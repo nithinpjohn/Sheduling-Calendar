@@ -2,7 +2,22 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/cee9f59b-1ce0-4c7d-8d1d-3c2e2c5c3a90
+🗓️ Scede - Modern Calendar & Scheduling App
+
+A sleek, intelligent calendar application built with React and TypeScript that helps you manage your schedule effortlessly. Features include:
+
+✨ Key Features:
+
+Interactive calendar with drag-and-drop event management
+Smart scheduling with conflict detection
+Email integration for seamless communication
+Dark/light theme support
+Responsive design for all devices
+Analytics dashboard with insights
+Real-time notifications
+🛠️ Tech Stack: React, TypeScript, Tailwind CSS, Shadcn/UI, FullCalendar
+
+Perfect for professionals, students, and anyone who wants to stay organized and productive!
 
 ## How can I edit this code?
 
