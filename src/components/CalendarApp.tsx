@@ -22,7 +22,22 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 
-// ... keep existing code (interfaces and types)
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  description?: string;
+  location?: string;
+  attendees?: number;
+  category?: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
 
 const sampleEvents: CalendarEvent[] = [
   {
@@ -137,10 +152,48 @@ const sampleEvents: CalendarEvent[] = [
   }
 ];
 
-// ... keep existing code (suggestedEvents and defaultCategories)
+const suggestedEvents: CalendarEvent[] = [
+  {
+    id: 'suggested-1',
+    title: 'Daily Standup',
+    start: '2025-05-06T09:00:00',
+    end: '2025-05-06T09:30:00',
+    description: 'Daily team standup meeting',
+    location: 'Virtual',
+    attendees: 5,
+    category: '1'
+  }
+];
+
+const defaultCategories: Category[] = [
+  { id: '1', name: 'Work', color: '#3B82F6' },
+  { id: '2', name: 'Personal', color: '#EF4444' },
+  { id: '3', name: 'Education', color: '#10B981' },
+  { id: '4', name: 'Business', color: '#F59E0B' },
+  { id: '5', name: 'Social', color: '#8B5CF6' }
+];
 
 export const CalendarApp: React.FC = () => {
-  // ... keep existing code (state declarations)
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [isNewEvent, setIsNewEvent] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<string>('dayGridMonth');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showMail, setShowMail] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
+  const [fontSize, setFontSize] = useState([14]);
+  const { toast } = useToast();
+  const calendarRef = useRef<FullCalendar>(null);
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -169,7 +222,140 @@ export const CalendarApp: React.FC = () => {
     }
   }, []);
 
-  // ... keep existing code (other useEffects and functions)
+  // Save events to localStorage whenever events change
+  useEffect(() => {
+    localStorage.setItem('calendar-events', JSON.stringify(events));
+  }, [events]);
+
+  // Save categories to localStorage whenever categories change
+  useEffect(() => {
+    localStorage.setItem('calendar-categories', JSON.stringify(categories));
+  }, [categories]);
+
+  const calendarEvents = events.map(event => ({
+    ...event,
+    backgroundColor: categories.find(cat => cat.id === event.category)?.color || '#3B82F6',
+    borderColor: categories.find(cat => cat.id === event.category)?.color || '#3B82F6',
+  }));
+
+  const handleDateClick = (arg: any) => {
+    setSelectedDate(arg.dateStr);
+    setSelectedEvent(null);
+    setIsNewEvent(true);
+    setIsEventModalOpen(true);
+  };
+
+  const handleDateSelect = (selectInfo: any) => {
+    setSelectedDate(selectInfo.startStr);
+    setSelectedEvent(null);
+    setIsNewEvent(true);
+    setIsEventModalOpen(true);
+  };
+
+  const handleEventClick = (clickInfo: any) => {
+    const event = events.find(e => e.id === clickInfo.event.id);
+    if (event) {
+      setSelectedEvent(event);
+      setIsNewEvent(false);
+      setIsEventModalOpen(true);
+    }
+  };
+
+  const handleEventDrop = (dropInfo: any) => {
+    const eventId = dropInfo.event.id;
+    const newStart = dropInfo.event.start.toISOString();
+    const newEnd = dropInfo.event.end ? dropInfo.event.end.toISOString() : newStart;
+
+    setEvents(prev => prev.map(event => 
+      event.id === eventId 
+        ? { ...event, start: newStart, end: newEnd }
+        : event
+    ));
+
+    toast({
+      title: "Event Updated",
+      description: "Event has been moved successfully.",
+    });
+  };
+
+  const handleEventResize = (resizeInfo: any) => {
+    const eventId = resizeInfo.event.id;
+    const newStart = resizeInfo.event.start.toISOString();
+    const newEnd = resizeInfo.event.end ? resizeInfo.event.end.toISOString() : newStart;
+
+    setEvents(prev => prev.map(event => 
+      event.id === eventId 
+        ? { ...event, start: newStart, end: newEnd }
+        : event
+    ));
+
+    toast({
+      title: "Event Updated",
+      description: "Event duration has been updated successfully.",
+    });
+  };
+
+  const handleSaveEvent = (eventData: CalendarEvent) => {
+    if (isNewEvent) {
+      const newEvent = {
+        ...eventData,
+        id: Date.now().toString(),
+      };
+      setEvents(prev => [...prev, newEvent]);
+      toast({
+        title: "Event Created",
+        description: "New event has been added to your calendar.",
+      });
+    } else {
+      setEvents(prev => prev.map(event => 
+        event.id === eventData.id ? eventData : event
+      ));
+      toast({
+        title: "Event Updated",
+        description: "Event has been updated successfully.",
+      });
+    }
+    setIsEventModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleDeleteEvent = (eventId: string) => {
+    setEvents(prev => prev.filter(event => event.id !== eventId));
+    setIsEventModalOpen(false);
+    setSelectedEvent(null);
+    toast({
+      title: "Event Deleted",
+      description: "Event has been removed from your calendar.",
+    });
+  };
+
+  const handleViewChange = (view: string) => {
+    setCurrentView(view);
+    if (calendarRef.current && view !== 'gantt') {
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.changeView(view);
+    }
+  };
+
+  const handleLogin = (user: string) => {
+    setUsername(user);
+    setIsLoggedIn(true);
+    setShowLogin(false);
+    toast({
+      title: "Welcome!",
+      description: `Successfully logged in as ${user}`,
+    });
+  };
+
+  const handleLogout = () => {
+    setUsername('');
+    setIsLoggedIn(false);
+    setShowProfile(false);
+    toast({
+      title: "Goodbye!",
+      description: "Successfully logged out",
+    });
+  };
 
   const renderCalendarView = () => {
     if (currentView === 'gantt') {
@@ -290,11 +476,28 @@ export const CalendarApp: React.FC = () => {
                 }
               }}
               drop={(info) => {
-                // ... keep existing code (drop handler)
+                console.log('Drop event triggered:', info);
+                const eventData = JSON.parse(info.draggedEl.dataset.event || '{}');
+                if (eventData.title) {
+                  const newEvent: CalendarEvent = {
+                    id: Date.now().toString(),
+                    title: eventData.title,
+                    start: info.date.toISOString(),
+                    end: new Date(info.date.getTime() + 60 * 60 * 1000).toISOString(),
+                    description: eventData.description || '',
+                    location: eventData.location || '',
+                    attendees: eventData.attendees || 1,
+                    category: eventData.category || '1'
+                  };
+                  setEvents(prev => [...prev, newEvent]);
+                  toast({
+                    title: "Event Added",
+                    description: `${eventData.title} has been added to your calendar.`,
+                  });
+                }
               }}
               eventReceive={(info) => {
                 console.log('Event receive triggered:', info);
-                // Additional handler for external events
               }}
             />
           </div>
@@ -303,5 +506,107 @@ export const CalendarApp: React.FC = () => {
     );
   };
 
-  // ... keep existing code (rest of the component)
+  if (showSummary) {
+    return (
+      <SummaryPage
+        events={events}
+        categories={categories}
+        onBack={() => setShowSummary(false)}
+      />
+    );
+  }
+
+  if (showProfile) {
+    return (
+      <ProfilePage
+        username={username}
+        onBack={() => setShowProfile(false)}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  if (showSettings) {
+    return (
+      <SettingsPage
+        onBack={() => setShowSettings(false)}
+        darkMode={darkMode}
+        onDarkModeChange={setDarkMode}
+        fontSize={fontSize[0]}
+        onFontSizeChange={(size) => setFontSize([size])}
+      />
+    );
+  }
+
+  if (showMail) {
+    return (
+      <MailInbox
+        onBack={() => setShowMail(false)}
+      />
+    );
+  }
+
+  return (
+    <SidebarProvider>
+      <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+        <div className="flex h-screen bg-gray-50 dark:bg-gray-900" style={{ fontSize: `${fontSize[0]}px` }}>
+          <CalendarSidebar
+            categories={categories}
+            onCategoryChange={setCategories}
+            suggestedEvents={suggestedEvents}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+          
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <TopMenuBar
+              onShowSummary={() => setShowSummary(true)}
+              onShowSearch={() => setShowSearch(true)}
+              onShowLogin={() => setShowLogin(true)}
+              onShowProfile={() => setShowProfile(true)}
+              onShowSettings={() => setShowSettings(true)}
+              onShowMail={() => setShowMail(true)}
+              isLoggedIn={isLoggedIn}
+              username={username}
+              onLogout={handleLogout}
+            />
+            
+            <main className="flex-1 overflow-auto p-6">
+              {renderCalendarView()}
+            </main>
+          </div>
+        </div>
+
+        <EventModal
+          isOpen={isEventModalOpen}
+          onClose={() => setIsEventModalOpen(false)}
+          event={selectedEvent}
+          selectedDate={selectedDate}
+          categories={categories}
+          onSave={handleSaveEvent}
+          onDelete={handleDeleteEvent}
+          isNewEvent={isNewEvent}
+        />
+
+        <CommandSearch
+          isOpen={showSearch}
+          onClose={() => setShowSearch(false)}
+          events={events}
+          categories={categories}
+          onEventSelect={(event) => {
+            setSelectedEvent(event);
+            setIsNewEvent(false);
+            setIsEventModalOpen(true);
+            setShowSearch(false);
+          }}
+        />
+
+        <LoginModal
+          isOpen={showLogin}
+          onClose={() => setShowLogin(false)}
+          onLogin={handleLogin}
+        />
+      </div>
+    </SidebarProvider>
+  );
 };
