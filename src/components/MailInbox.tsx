@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -113,7 +112,6 @@ export const MailInbox: React.FC = () => {
     <div className="h-full flex flex-col bg-background">
       <div className="p-6 border-b bg-white dark:bg-gray-900">
         <h1 className="text-2xl font-semibold mb-1">Mail</h1>
-        <p className="text-sm text-muted-foreground">1 of 200</p>
       </div>
 
       <div className="flex-1 flex">
