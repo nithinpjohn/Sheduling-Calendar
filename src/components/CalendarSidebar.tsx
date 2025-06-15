@@ -142,7 +142,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     setCurrentSuggestions(safeSuggestedEvents);
   }, [safeSuggestedEvents]);
 
-  const suggestionsToRender = (Array.isArray(currentSuggestions) && currentSuggestions.length >   ? currentSuggestions 
+  const suggestionsToRender = (Array.isArray(currentSuggestions) && currentSuggestions.length > 0 ? currentSuggestions 
     : Array.isArray(safeSuggestedEvents) 
       ? safeSuggestedEvents 
       : [])
