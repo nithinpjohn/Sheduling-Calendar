@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Plus, Filter, Calendar, BarChart3, Users, Lightbulb, GripVertical, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -50,10 +50,16 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   const safeEvents = events || [];
   const safeSuggestedEvents = suggestedEvents || [];
 
-  const upcomingEvents = safeEvents
-    .filter(event => isFuture(parseISO(event.start)))
-    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-    .slice(0, 5);
+  // Calculate upcoming events dynamically based on actual events
+  const upcomingEvents = useMemo(() => {
+    return safeEvents
+      .filter(event => {
+        const eventDate = new Date(event.start);
+        return eventDate > new Date(); // Only future events
+      })
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+      .slice(0, 5);
+  }, [safeEvents]);
 
   const handleCategoryToggle = (categoryId: string) => {
     setSelectedCategories(
@@ -108,15 +114,18 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     console.log('Drag started for:', suggestedEvent.title);
     e.dataTransfer.effectAllowed = 'copy';
     
-    const dragData = {
+    // Set multiple data formats for better compatibility
+    const dragData = JSON.stringify({
       type: 'suggested-event',
       data: suggestedEvent
-    };
+    });
     
-    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
-    e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+    e.dataTransfer.setData('text/plain', dragData);
+    e.dataTransfer.setData('application/json', dragData);
     
+    // Also set a custom attribute on the dragged element
     const target = e.currentTarget;
+    target.setAttribute('data-suggested-event', dragData);
     target.classList.add('dragging');
     target.style.opacity = '0.5';
   };
@@ -126,14 +135,14 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     const target = e.currentTarget;
     target.classList.remove('dragging');
     target.style.opacity = '1';
+    target.removeAttribute('data-suggested-event');
   };
 
   React.useEffect(() => {
     setCurrentSuggestions(safeSuggestedEvents);
   }, [safeSuggestedEvents]);
 
-  const suggestionsToRender = (Array.isArray(currentSuggestions) && currentSuggestions.length > 0 
-    ? currentSuggestions 
+  const suggestionsToRender = (Array.isArray(currentSuggestions) && currentSuggestions.length >   ? currentSuggestions 
     : Array.isArray(safeSuggestedEvents) 
       ? safeSuggestedEvents 
       : [])
@@ -299,11 +308,11 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
 
             <Separator />
 
-            {/* Upcoming Events */}
+            {/* Upcoming Events - Now using real dynamic data */}
             <div className="space-y-3">
               <Label className="text-sm font-medium flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Upcoming Events
+                Upcoming Events ({upcomingEvents.length})
               </Label>
               <div className="space-y-2">
                 {upcomingEvents.length === 0 ? (
@@ -346,7 +355,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               </div>
             </div>
 
-            {/* Quick Stats */}
+            {/* Quick Stats - Now using real dynamic data */}
             <div className="space-y-3">
               <Label className="text-sm font-medium flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
@@ -362,7 +371,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                 <Card className="rounded-lg">
                   <CardContent className="p-3 text-center">
                     <div className="text-2xl font-bold text-green-600">
-                      {safeEvents.filter(e => isFuture(parseISO(e.start))).length}
+                      {upcomingEvents.length}
                     </div>
                     <div className="text-xs text-muted-foreground">Upcoming</div>
                   </CardContent>

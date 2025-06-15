@@ -403,6 +403,7 @@ export const CalendarApp: React.FC = () => {
   };
 
   const handleSuggestedEventDrop = (eventData: SuggestedEvent, date: Date) => {
+    console.log('Creating event from suggested:', eventData, 'at date:', date);
     const endTime = new Date(date.getTime() + eventData.duration * 60 * 60 * 1000);
     const newEvent: CalendarEvent = {
       id: Date.now().toString(),
@@ -415,7 +416,7 @@ export const CalendarApp: React.FC = () => {
       backgroundColor: categories.find(c => c.id === eventData.category)?.color,
       borderColor: categories.find(c => c.id === eventData.category)?.color,
     };
-    setEvents([...events, newEvent]);
+    setEvents(prevEvents => [...prevEvents, newEvent]);
     toast({
       title: "Event Created",
       description: `"${newEvent.title}" has been added to your calendar.`,
@@ -540,17 +541,36 @@ export const CalendarApp: React.FC = () => {
                 }
               }}
               drop={(info) => {
+                console.log('Drop event triggered:', info);
                 try {
-                  const draggedData = info.draggedEl.getAttribute('data-suggested-event');
+                  // Try to get data from the dragged element
+                  let draggedData = info.draggedEl.getAttribute('data-suggested-event');
+                  
+                  if (!draggedData) {
+                    // Fallback: try to get from dataTransfer if available
+                    const dataTransfer = (info as any).dataTransfer;
+                    if (dataTransfer) {
+                      draggedData = dataTransfer.getData('text/plain') || dataTransfer.getData('application/json');
+                    }
+                  }
+                  
                   if (draggedData) {
+                    console.log('Drag data found:', draggedData);
                     const parsed = JSON.parse(draggedData);
                     if (parsed.type === 'suggested-event' && parsed.data) {
+                      console.log('Processing suggested event:', parsed.data);
                       handleSuggestedEventDrop(parsed.data, info.date);
                     }
+                  } else {
+                    console.log('No drag data found');
                   }
                 } catch (error) {
                   console.error('Error processing dropped event:', error);
                 }
+              }}
+              eventReceive={(info) => {
+                console.log('Event receive triggered:', info);
+                // Additional handler for external events
               }}
             />
           </div>

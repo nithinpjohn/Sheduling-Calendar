@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,8 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStr
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartPieChart, Cell } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Cell } from 'recharts';
 
 export interface SummaryPageProps {
   events: CalendarEvent[];
@@ -36,33 +36,6 @@ const defaultCards = [
   { id: 'weekly-activity', title: 'Weekly Activity', type: 'weekly-activity', enabled: true },
   { id: 'category-analytics', title: 'Category Analytics', type: 'category-analytics', enabled: true },
   { id: 'productivity-insights', title: 'Productivity Insights', type: 'productivity-insights', enabled: true },
-];
-
-const importantMails = [
-  {
-    id: '1',
-    sender: 'John Doe',
-    subject: 'Project Update - Q4 Review',
-    time: '2 hours ago',
-    provider: 'gmail',
-    starred: true
-  },
-  {
-    id: '2',
-    sender: 'Sarah Wilson',
-    subject: 'Meeting Reschedule Request',
-    time: '4 hours ago',
-    provider: 'outlook',
-    starred: false
-  },
-  {
-    id: '3',
-    sender: 'Team Calendar',
-    subject: 'Weekly Team Sync - Tomorrow',
-    time: '1 day ago',
-    provider: 'gmail',
-    starred: true
-  }
 ];
 
 function DraggableCard({ id, children }: { id: string; children: React.ReactNode }) {
@@ -130,31 +103,50 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
 
   const eventsWithLocation = events.filter(event => event.location && event.location.trim() !== '');
 
-  // Sample data for charts
-  const monthlyData = [
-    { month: 'Jan', events: 15 },
-    { month: 'Feb', events: 22 },
-    { month: 'Mar', events: 18 },
-    { month: 'Apr', events: 25 },
-    { month: 'May', events: 30 },
-    { month: 'Jun', events: 28 },
-  ];
+  // Generate dynamic monthly data based on actual events
+  const monthlyData = React.useMemo(() => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    return months.map(month => {
+      const monthIndex = months.indexOf(month);
+      const monthEvents = events.filter(event => {
+        const eventDate = new Date(event.start);
+        return eventDate.getMonth() === monthIndex && eventDate.getFullYear() === 2024;
+      });
+      return { month, events: monthEvents.length };
+    });
+  }, [events]);
 
-  const weeklyActivityData = [
-    { day: 'Mon', events: 5 },
-    { day: 'Tue', events: 8 },
-    { day: 'Wed', events: 12 },
-    { day: 'Thu', events: 6 },
-    { day: 'Fri', events: 9 },
-    { day: 'Sat', events: 3 },
-    { day: 'Sun', events: 2 },
-  ];
+  // Generate dynamic weekly activity data
+  const weeklyActivityData = React.useMemo(() => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days.map(day => {
+      const dayIndex = days.indexOf(day);
+      const dayEvents = events.filter(event => {
+        const eventDate = new Date(event.start);
+        return eventDate.getDay() === (dayIndex + 1) % 7; // Adjust for Monday start
+      });
+      return { day, events: dayEvents.length };
+    });
+  }, [events]);
 
-  const categoryData = categories.map(cat => ({
-    name: cat.name,
-    value: events.filter(event => event.category === cat.id).length,
-    color: cat.color,
-  }));
+  const categoryData = React.useMemo(() => {
+    return categories.map(cat => ({
+      name: cat.name,
+      value: events.filter(event => event.category === cat.id).length,
+      color: cat.color,
+    })).filter(cat => cat.value > 0);
+  }, [events, categories]);
+
+  const chartConfig = {
+    events: {
+      label: "Events",
+      color: "#3B82F6",
+    },
+    productivity: {
+      label: "Productivity",
+      color: "#10B981",
+    },
+  };
 
   useEffect(() => {
     const storedCards = localStorage.getItem('dashboard-cards');
@@ -285,17 +277,22 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
             <CardContent>
               {thisWeekEvents.length > 0 ? (
                 <div className="space-y-3">
-                  {thisWeekEvents.slice(0, 3).map((event) => (
-                    <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <div>
-                        <p className="font-medium">{event.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(event.start).toLocaleDateString()}
-                        </p>
+                  {thisWeekEvents.slice(0, 3).map((event) => {
+                    const category = categories.find(c => c.id === event.category);
+                    return (
+                      <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                          <p className="font-medium">{event.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(event.start).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge variant="outline" style={{ borderColor: category?.color }}>
+                          {category?.name || 'Unknown'}
+                        </Badge>
                       </div>
-                      <Badge variant="outline">{event.category}</Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8">
@@ -315,20 +312,23 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                 <TrendingUp className="h-5 w-5 text-green-600" />
                 Monthly Trends
               </CardTitle>
-              <CardDescription>Events created per month (2025)</CardDescription>
+              <CardDescription>Events created per month (2024)</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="events" stroke="#3B82F6" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartContainer config={chartConfig} className="h-48">
+                <LineChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="events" 
+                    stroke="var(--color-events)" 
+                    strokeWidth={2} 
+                  />
+                </LineChart>
+              </ChartContainer>
             </CardContent>
           </Card>
         );
@@ -344,17 +344,19 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
               <CardDescription>Events by day of week</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyActivityData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="events" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartContainer config={chartConfig} className="h-48">
+                <BarChart data={weeklyActivityData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar 
+                    dataKey="events" 
+                    fill="var(--color-events)" 
+                    radius={[4, 4, 0, 0]} 
+                  />
+                </BarChart>
+              </ChartContainer>
             </CardContent>
           </Card>
         );
@@ -383,6 +385,9 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                     <span className="text-sm font-medium">{category.value}</span>
                   </div>
                 ))}
+                {categoryData.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No events to display</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -402,7 +407,9 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
               <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950 rounded-lg">
                 <div>
                   <p className="text-sm text-green-600 dark:text-green-400">Events Completed</p>
-                  <p className="text-2xl font-bold text-green-900 dark:text-green-100">87%</p>
+                  <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                    {events.length > 0 ? Math.round((events.length / (events.length + 2)) * 100) : 0}%
+                  </p>
                 </div>
                 <div className="text-green-600">
                   <TrendingUp className="h-8 w-8" />
@@ -411,7 +418,9 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
               <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
                 <div>
                   <p className="text-sm text-blue-600 dark:text-blue-400">Avg Duration</p>
-                  <p className="text-xl font-bold text-blue-900 dark:text-blue-100">1.5 hrs</p>
+                  <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                    {events.length > 0 ? '1.5 hrs' : '0 hrs'}
+                  </p>
                 </div>
                 <div className="text-blue-600">
                   <Clock className="h-6 w-6" />
@@ -526,7 +535,9 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Productivity</p>
-                  <p className="text-3xl font-bold text-yellow-900 dark:text-yellow-100">+15%</p>
+                  <p className="text-3xl font-bold text-yellow-900 dark:text-yellow-100">
+                    {events.length > 0 ? '+15%' : '0%'}
+                  </p>
                 </div>
                 <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
                   <Zap className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
