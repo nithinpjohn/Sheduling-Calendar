@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -270,6 +271,12 @@ export const CalendarApp: React.FC = () => {
     if (savedCategories) {
       setCategories(JSON.parse(savedCategories));
     }
+
+    // Navigate to May 2025 when component mounts
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.gotoDate('2025-05-01');
+    }
   }, []);
 
   useEffect(() => {
@@ -541,6 +548,7 @@ export const CalendarApp: React.FC = () => {
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               initialView={currentView}
+              initialDate="2025-05-01"
               headerToolbar={{
                 left: 'prev,next today',
                 center: 'title',
