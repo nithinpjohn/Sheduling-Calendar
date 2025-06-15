@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Search, Bell, User, Settings, LogOut, Monitor, CalendarIcon, BarChart3, Mail, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Search, Bell, User, Settings, LogOut, Monitor, CalendarIcon, BarChart3, Mail, PanelLeftClose, PanelLeftOpen, AlignHorizontalSpaceAround } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -34,6 +35,7 @@ interface TopMenuBarProps {
   onPageChange: (page: 'dashboard' | 'calendar' | 'profile' | 'settings' | 'mails') => void;
   isSidebarCollapsed: boolean;
   onToggleSidebar: () => void;
+  onLayoutToggle?: () => void;
 }
 
 export const TopMenuBar: React.FC<TopMenuBarProps> = ({ 
@@ -46,7 +48,8 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
   currentPage,
   onPageChange,
   isSidebarCollapsed,
-  onToggleSidebar
+  onToggleSidebar,
+  onLayoutToggle
 }) => {
   const [notificationTab, setNotificationTab] = useState('all');
   const [currentPageNum, setCurrentPageNum] = useState(1);
@@ -130,7 +133,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
           </Button>
         </div>
 
-        {/* Right Side - Search, Theme, Notifications and Profile */}
+        {/* Right Side - Search, Layout, Theme, Notifications and Profile */}
         <div className="flex items-center space-x-2">
           {/* Search Bar */}
           <div className="relative">
@@ -142,6 +145,18 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
               readOnly
             />
           </div>
+          
+          {/* Layout Toggle */}
+          {onLayoutToggle && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onLayoutToggle}
+              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <AlignHorizontalSpaceAround className="h-5 w-5" />
+            </Button>
+          )}
           
           <ThemeToggle />
           
