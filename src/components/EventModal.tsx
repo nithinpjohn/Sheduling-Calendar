@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CalendarEvent, EventCategory } from './CalendarApp';
 import { VideoConferenceForm } from './VideoConferenceForm';
@@ -55,9 +54,9 @@ export const EventModal: React.FC<EventModalProps> = ({
   });
   
   const [videoConference, setVideoConference] = useState({
-    platform: 'zoom',
-    link: '',
-    autoGenerate: true,
+    platform: 'zoom' as 'zoom' | 'teams' | 'meet',
+    url: '',
+    meetingId: '',
   });
   
   const [attendeeList, setAttendeeList] = useState<Array<{
@@ -88,8 +87,8 @@ export const EventModal: React.FC<EventModalProps> = ({
         
         setVideoConference({
           platform: 'zoom',
-          link: '',
-          autoGenerate: true,
+          url: '',
+          meetingId: '',
         });
         
         setAttendeeList([]);
@@ -111,11 +110,11 @@ export const EventModal: React.FC<EventModalProps> = ({
         
         setVideoConference(event.videoConference || {
           platform: 'zoom',
-          link: '',
-          autoGenerate: true,
+          url: '',
+          meetingId: '',
         });
         
-        setAttendeeList(event.attendeeList || []);
+        setAttendeeList([]);
       }
       setErrors({});
     }
@@ -173,8 +172,7 @@ export const EventModal: React.FC<EventModalProps> = ({
       category: formData.category,
       start: startDateTime.toISOString(),
       end: endDateTime.toISOString(),
-      videoConference: videoConference.link ? videoConference : undefined,
-      attendeeList: attendeeList.length > 0 ? attendeeList : undefined,
+      videoConference: videoConference.url ? videoConference : undefined,
     };
 
     onSave(eventData);

@@ -8,22 +8,21 @@ import { Monitor, Zap, Video } from 'lucide-react';
 
 interface VideoConferenceFormProps {
   value: {
-    platform: string;
-    link: string;
-    autoGenerate: boolean;
+    platform: 'zoom' | 'teams' | 'meet';
+    url: string;
+    meetingId?: string;
   };
-  onChange: (value: { platform: string; link: string; autoGenerate: boolean }) => void;
+  onChange: (value: { platform: 'zoom' | 'teams' | 'meet'; url: string; meetingId?: string }) => void;
 }
 
 const platforms = [
   { id: 'zoom', name: 'Zoom', icon: Monitor },
   { id: 'teams', name: 'Microsoft Teams', icon: Monitor },
   { id: 'meet', name: 'Google Meet', icon: Video },
-  { id: 'webex', name: 'Cisco Webex', icon: Zap },
 ];
 
 export const VideoConferenceForm: React.FC<VideoConferenceFormProps> = ({ value, onChange }) => {
-  const generateMeetingLink = (platform: string) => {
+  const generateMeetingLink = (platform: 'zoom' | 'teams' | 'meet') => {
     const meetingId = Math.random().toString(36).substring(2, 15);
     switch (platform) {
       case 'zoom':
@@ -32,21 +31,23 @@ export const VideoConferenceForm: React.FC<VideoConferenceFormProps> = ({ value,
         return `https://teams.microsoft.com/l/meetup-join/${meetingId}`;
       case 'meet':
         return `https://meet.google.com/${meetingId}`;
-      case 'webex':
-        return `https://meet.webex.com/${meetingId}`;
       default:
         return '';
     }
   };
 
   const handlePlatformChange = (platform: string) => {
-    const newLink = value.autoGenerate ? generateMeetingLink(platform) : value.link;
-    onChange({ ...value, platform, link: newLink });
+    const typedPlatform = platform as 'zoom' | 'teams' | 'meet';
+    onChange({ 
+      platform: typedPlatform, 
+      url: value.url,
+      meetingId: value.meetingId 
+    });
   };
 
-  const handleAutoGenerateChange = (autoGenerate: boolean) => {
-    const newLink = autoGenerate ? generateMeetingLink(value.platform) : value.link;
-    onChange({ ...value, autoGenerate, link: newLink });
+  const handleGenerateLink = () => {
+    const newLink = generateMeetingLink(value.platform);
+    onChange({ ...value, url: newLink });
   };
 
   return (
@@ -66,38 +67,22 @@ export const VideoConferenceForm: React.FC<VideoConferenceFormProps> = ({ value,
         </RadioGroup>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          id="autoGenerate"
-          checked={value.autoGenerate}
-          onChange={(e) => handleAutoGenerateChange(e.target.checked)}
-          className="rounded"
-        />
-        <Label htmlFor="autoGenerate" className="text-sm">
-          Auto-generate meeting link
-        </Label>
-      </div>
-
       <div>
         <Label htmlFor="meetingLink" className="text-sm font-medium">Meeting Link</Label>
         <div className="flex gap-2 mt-1">
           <Input
             id="meetingLink"
-            value={value.link}
-            onChange={(e) => onChange({ ...value, link: e.target.value })}
-            placeholder="Enter meeting link or auto-generate"
-            disabled={value.autoGenerate}
+            value={value.url}
+            onChange={(e) => onChange({ ...value, url: e.target.value })}
+            placeholder="Enter meeting link or generate one"
           />
-          {!value.autoGenerate && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onChange({ ...value, link: generateMeetingLink(value.platform) })}
-            >
-              Generate
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGenerateLink}
+          >
+            Generate
+          </Button>
         </div>
       </div>
     </div>

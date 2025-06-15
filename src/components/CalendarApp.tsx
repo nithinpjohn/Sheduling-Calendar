@@ -115,7 +115,8 @@ export const CalendarApp: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommandSearchOpen, setIsCommandSearchOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'calendar' | 'summary' | 'gantt' | 'analytics' | 'inbox'>('calendar');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { toast } = useToast();
@@ -124,37 +125,47 @@ export const CalendarApp: React.FC = () => {
     return events.filter(event => selectedCategories.length === 0 || selectedCategories.includes(event.category));
   }, [events, selectedCategories]);
 
-  const handleEventClick = (clickInfo: { event: CalendarEvent }) => {
-    setSelectedEvent(clickInfo.event);
-    setIsModalOpen(true);
+  const handleEventClick = (clickInfo: any) => {
+    const eventData = events.find(e => e.id === clickInfo.event.id);
+    if (eventData) {
+      setSelectedEvent(eventData);
+      setIsModalOpen(true);
+    }
   };
 
-  const handleDateClick = (selectInfo: { date: Date }) => {
-    setSelectedDate(selectInfo.date);
+  const handleDateClick = (selectInfo: any) => {
+    setSelectedDate(selectInfo.dateStr);
+    setSelectedEndDate(null);
     setSelectedEvent(null);
     setIsModalOpen(true);
   };
 
   const handleCreateNew = () => {
-    setSelectedDate(new Date());
+    setSelectedDate(new Date().toISOString());
+    setSelectedEndDate(null);
     setSelectedEvent(null);
     setIsModalOpen(true);
   };
 
-  const handleSaveEvent = (event: CalendarEvent) => {
-    if (event.id) {
+  const handleSaveEvent = (eventData: Omit<CalendarEvent, 'id'>) => {
+    const newEvent: CalendarEvent = {
+      ...eventData,
+      id: selectedEvent?.id || Date.now().toString(),
+    };
+
+    if (selectedEvent) {
       // Update existing event
-      setEvents(events.map(e => (e.id === event.id ? event : e)));
+      setEvents(events.map(e => (e.id === selectedEvent.id ? newEvent : e)));
       toast({
         title: "Event Updated",
-        description: `${event.title} has been updated successfully.`,
+        description: `${newEvent.title} has been updated successfully.`,
       });
     } else {
       // Create new event
-      setEvents([...events, event]);
+      setEvents([...events, newEvent]);
       toast({
         title: "Event Created",
-        description: `${event.title} has been added to your calendar.`,
+        description: `${newEvent.title} has been added to your calendar.`,
       });
     }
     setIsModalOpen(false);
@@ -170,29 +181,35 @@ export const CalendarApp: React.FC = () => {
   };
 
   const handleEventDrop = (info: any) => {
-    const updatedEvent = {
-      ...events.find(e => e.id === info.event.id),
-      start: info.event.startStr,
-      end: info.event.endStr,
-    };
-    setEvents(events.map(e => (e.id === info.event.id ? updatedEvent : e)));
-    toast({
-      title: "Event Moved",
-      description: `${info.event.title} has been moved to ${new Date(info.event.startStr).toLocaleDateString()}.`,
-    });
+    const eventToUpdate = events.find(e => e.id === info.event.id);
+    if (eventToUpdate) {
+      const updatedEvent = {
+        ...eventToUpdate,
+        start: info.event.startStr,
+        end: info.event.endStr,
+      };
+      setEvents(events.map(e => (e.id === info.event.id ? updatedEvent : e)));
+      toast({
+        title: "Event Moved",
+        description: `${info.event.title} has been moved to ${new Date(info.event.startStr).toLocaleDateString()}.`,
+      });
+    }
   };
 
   const handleEventResize = (info: any) => {
-    const updatedEvent = {
-      ...events.find(e => e.id === info.event.id),
-      start: info.event.startStr,
-      end: info.event.endStr,
-    };
-    setEvents(events.map(e => (e.id === info.event.id ? updatedEvent : e)));
-    toast({
-      title: "Event Resized",
-      description: `${info.event.title} has been resized.`,
-    });
+    const eventToUpdate = events.find(e => e.id === info.event.id);
+    if (eventToUpdate) {
+      const updatedEvent = {
+        ...eventToUpdate,
+        start: info.event.startStr,
+        end: info.event.endStr,
+      };
+      setEvents(events.map(e => (e.id === info.event.id ? updatedEvent : e)));
+      toast({
+        title: "Event Resized",
+        description: `${info.event.title} has been resized.`,
+      });
+    }
   };
 
   const handleDrop = useCallback((info: any) => {
@@ -301,12 +318,20 @@ export const CalendarApp: React.FC = () => {
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       <TopMenuBar
-        currentView={currentView}
-        setCurrentView={setCurrentView}
-        sidebarCollapsed={sidebarCollapsed}
-        setSidebarCollapsed={setSidebarCollapsed}
-        onOpenCommandSearch={() => setIsCommandSearchOpen(true)}
-        onCreateNew={handleCreateNew}
+        onSearch={() => setIsCommandSearchOpen(true)}
+        isLoggedIn={false}
+        onLogout={() => {}}
+        onProfileClick={() => {}}
+        onSettingsClick={() => {}}
+        onLogin={() => {}}
+        currentPage={currentView === 'inbox' ? 'mails' : currentView === 'calendar' ? 'calendar' : 'dashboard'}
+        onPageChange={(page) => {
+          if (page === 'mails') setCurrentView('inbox');
+          else if (page === 'calendar') setCurrentView('calendar');
+          else setCurrentView('summary');
+        }}
+        isSidebarCollapsed={sidebarCollapsed}
+        onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -317,7 +342,10 @@ export const CalendarApp: React.FC = () => {
             setCategories={setCategories}
             selectedCategories={selectedCategories}
             setSelectedCategories={setSelectedCategories}
-            onEventClick={handleEventClick}
+            onEventClick={(event) => {
+              setSelectedEvent(event);
+              setIsModalOpen(true);
+            }}
             onOpenCommandSearch={() => setIsCommandSearchOpen(true)}
             onCreateNew={handleCreateNew}
             suggestedEvents={suggestedEvents}
@@ -368,7 +396,10 @@ export const CalendarApp: React.FC = () => {
             <SummaryPage
               events={events}
               categories={categories}
-              onEventClick={handleEventClick}
+              onEventClick={(event) => {
+                setSelectedEvent(event);
+                setIsModalOpen(true);
+              }}
               onCreateNew={handleCreateNew}
               onOpenCommandSearch={() => setIsCommandSearchOpen(true)}
               suggestedEvents={suggestedEvents}
@@ -380,7 +411,16 @@ export const CalendarApp: React.FC = () => {
           )}
 
           {currentView === 'gantt' && (
-            <GanttView events={events} categories={categories} />
+            <GanttView 
+              events={events} 
+              categories={categories}
+              currentView="gantt"
+              onViewChange={(view) => {
+                if (view === 'dayGridMonth' || view === 'timeGridWeek' || view === 'timeGridDay') {
+                  setCurrentView('calendar');
+                }
+              }}
+            />
           )}
 
           {currentView === 'analytics' && (
@@ -405,17 +445,22 @@ export const CalendarApp: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         event={selectedEvent}
+        isCreating={!selectedEvent}
+        selectedDate={selectedDate || new Date().toISOString()}
+        selectedEndDate={selectedEndDate}
+        categories={categories}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
-        categories={categories}
-        selectedDate={selectedDate}
       />
 
       <CommandSearch
         isOpen={isCommandSearchOpen}
         onClose={() => setIsCommandSearchOpen(false)}
         events={events}
-        onEventClick={handleEventClick}
+        onEventClick={(event) => {
+          setSelectedEvent(event);
+          setIsModalOpen(true);
+        }}
         onCreateNew={handleCreateNew}
       />
 
