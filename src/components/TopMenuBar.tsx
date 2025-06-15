@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, Bell, User, Settings, LogOut, Monitor, CalendarIcon, BarChart3, Mail, PanelLeftClose, PanelLeftOpen, AlignHorizontalSpaceAround, Grid, List, Calendar as CalendarView, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -236,7 +237,14 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
               </Popover>
             )}
             
-            <ThemeToggle />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <ThemeToggle />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Theme</TooltipContent>
+            </Tooltip>
             
             {isLoggedIn ? (
               <>
