@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -457,11 +458,14 @@ export const CalendarApp: React.FC = () => {
         isOpen={isCommandSearchOpen}
         onClose={() => setIsCommandSearchOpen(false)}
         events={events}
-        onEventClick={(event) => {
+        categories={categories}
+        onEventSelect={(event) => {
           setSelectedEvent(event);
           setIsModalOpen(true);
         }}
         onCreateNew={handleCreateNew}
+        onProfileClick={() => {}}
+        onSettingsClick={() => {}}
       />
 
       <Toaster />

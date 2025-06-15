@@ -108,10 +108,10 @@ export const EventModal: React.FC<EventModalProps> = ({
           endTime: format(endDate, 'HH:mm'),
         });
         
-        setVideoConference(event.videoConference || {
-          platform: 'zoom',
-          url: '',
-          meetingId: '',
+        setVideoConference({
+          platform: event.videoConference?.platform || 'zoom',
+          url: event.videoConference?.url || '',
+          meetingId: event.videoConference?.meetingId || '',
         });
         
         setAttendeeList([]);
@@ -383,7 +383,13 @@ export const EventModal: React.FC<EventModalProps> = ({
                 <TabsContent value="video" className="space-y-4 p-1 h-full">
                   <VideoConferenceForm
                     value={videoConference}
-                    onChange={setVideoConference}
+                    onChange={(value) => {
+                      setVideoConference({
+                        platform: value.platform,
+                        url: value.url,
+                        meetingId: value.meetingId || '',
+                      });
+                    }}
                   />
                 </TabsContent>
 
