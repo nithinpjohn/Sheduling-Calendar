@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -140,11 +141,11 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
   const chartConfig = {
     events: {
       label: "Events",
-      color: "#3B82F6",
+      color: "hsl(var(--primary))",
     },
     productivity: {
       label: "Productivity",
-      color: "#10B981",
+      color: "hsl(var(--chart-2))",
     },
   };
 
@@ -314,18 +315,33 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
               </CardTitle>
               <CardDescription>Events created per month (2024)</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-48">
-                <LineChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
+            <CardContent className="pb-2">
+              <ChartContainer config={chartConfig} className="h-64 w-full">
+                <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                  <XAxis 
+                    dataKey="month" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent 
+                      className="bg-background/95 backdrop-blur-sm border-border/50 shadow-lg" 
+                    />} 
+                  />
                   <Line 
                     type="monotone" 
                     dataKey="events" 
-                    stroke="var(--color-events)" 
-                    strokeWidth={2} 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={3}
+                    dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
                   />
                 </LineChart>
               </ChartContainer>
@@ -343,17 +359,31 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
               </CardTitle>
               <CardDescription>Events by day of week</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-48">
-                <BarChart data={weeklyActivityData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
+            <CardContent className="pb-2">
+              <ChartContainer config={chartConfig} className="h-64 w-full">
+                <BarChart data={weeklyActivityData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                  <XAxis 
+                    dataKey="day" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent 
+                      className="bg-background/95 backdrop-blur-sm border-border/50 shadow-lg" 
+                    />} 
+                  />
                   <Bar 
                     dataKey="events" 
-                    fill="var(--color-events)" 
-                    radius={[4, 4, 0, 0]} 
+                    fill="hsl(var(--primary))" 
+                    radius={[8, 8, 0, 0]}
+                    className="hover:opacity-80 transition-opacity"
                   />
                 </BarChart>
               </ChartContainer>
@@ -371,22 +401,36 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
               </CardTitle>
               <CardDescription>Event distribution by category</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
+            <CardContent className="pb-2">
+              <div className="space-y-4">
                 {categoryData.map((category, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-3">
                       <div 
-                        className="w-3 h-3 rounded-full" 
+                        className="w-4 h-4 rounded-full shadow-sm" 
                         style={{ backgroundColor: category.color }}
                       />
-                      <span className="text-sm">{category.name}</span>
+                      <span className="text-sm font-medium">{category.name}</span>
                     </div>
-                    <span className="text-sm font-medium">{category.value}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold">{category.value}</span>
+                      <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ 
+                            backgroundColor: category.color,
+                            width: `${Math.min((category.value / Math.max(...categoryData.map(c => c.value))) * 100, 100)}%`
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
                 {categoryData.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No events to display</p>
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <PieChart className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-sm text-muted-foreground">No events to display</p>
+                  </div>
                 )}
               </div>
             </CardContent>
