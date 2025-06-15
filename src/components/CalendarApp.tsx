@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -22,7 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 
-interface CalendarEvent {
+export interface CalendarEvent {
   id: string;
   title: string;
   start: string;
@@ -30,13 +29,34 @@ interface CalendarEvent {
   description?: string;
   location?: string;
   attendees?: number;
-  category?: string;
+  category: string;
+  videoConference?: {
+    platform: string;
+    link: string;
+    autoGenerate: boolean;
+  };
+  attendeeList?: Array<{
+    email: string;
+    status: 'pending' | 'accepted' | 'declined';
+    name?: string;
+  }>;
 }
 
-interface Category {
+export interface EventCategory {
   id: string;
   name: string;
   color: string;
+  isDefault?: boolean;
+}
+
+export interface SuggestedEvent {
+  id: string;
+  title: string;
+  description?: string;
+  location?: string;
+  category: string;
+  duration?: number;
+  defaultAttendees?: number;
 }
 
 const sampleEvents: CalendarEvent[] = [
@@ -152,30 +172,30 @@ const sampleEvents: CalendarEvent[] = [
   }
 ];
 
-const suggestedEvents: CalendarEvent[] = [
+const suggestedEvents: SuggestedEvent[] = [
   {
     id: 'suggested-1',
     title: 'Daily Standup',
-    start: '2025-05-06T09:00:00',
-    end: '2025-05-06T09:30:00',
     description: 'Daily team standup meeting',
     location: 'Virtual',
-    attendees: 5,
-    category: '1'
+    defaultAttendees: 5,
+    category: '1',
+    duration: 0.5
   }
 ];
 
-const defaultCategories: Category[] = [
-  { id: '1', name: 'Work', color: '#3B82F6' },
-  { id: '2', name: 'Personal', color: '#EF4444' },
-  { id: '3', name: 'Education', color: '#10B981' },
-  { id: '4', name: 'Business', color: '#F59E0B' },
-  { id: '5', name: 'Social', color: '#8B5CF6' }
+const defaultCategories: EventCategory[] = [
+  { id: '1', name: 'Work', color: '#3B82F6', isDefault: true },
+  { id: '2', name: 'Personal', color: '#EF4444', isDefault: true },
+  { id: '3', name: 'Education', color: '#10B981', isDefault: true },
+  { id: '4', name: 'Business', color: '#F59E0B', isDefault: true },
+  { id: '5', name: 'Social', color: '#8B5CF6', isDefault: true }
 ];
 
 export const CalendarApp: React.FC = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  const [categories, setCategories] = useState<EventCategory[]>(defaultCategories);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isNewEvent, setIsNewEvent] = useState(false);
@@ -295,7 +315,7 @@ export const CalendarApp: React.FC = () => {
     });
   };
 
-  const handleSaveEvent = (eventData: CalendarEvent) => {
+  const handleSaveEvent = (eventData: Omit<CalendarEvent, 'id'>) => {
     if (isNewEvent) {
       const newEvent = {
         ...eventData,
@@ -308,7 +328,7 @@ export const CalendarApp: React.FC = () => {
       });
     } else {
       setEvents(prev => prev.map(event => 
-        event.id === eventData.id ? eventData : event
+        event.id === selectedEvent?.id ? { ...eventData, id: selectedEvent.id } : event
       ));
       toast({
         title: "Event Updated",
@@ -511,6 +531,7 @@ export const CalendarApp: React.FC = () => {
       <SummaryPage
         events={events}
         categories={categories}
+        suggestedEvents={suggestedEvents}
         onBack={() => setShowSummary(false)}
       />
     );
@@ -519,9 +540,7 @@ export const CalendarApp: React.FC = () => {
   if (showProfile) {
     return (
       <ProfilePage
-        username={username}
         onBack={() => setShowProfile(false)}
-        onLogout={handleLogout}
       />
     );
   }
@@ -530,10 +549,6 @@ export const CalendarApp: React.FC = () => {
     return (
       <SettingsPage
         onBack={() => setShowSettings(false)}
-        darkMode={darkMode}
-        onDarkModeChange={setDarkMode}
-        fontSize={fontSize[0]}
-        onFontSizeChange={(size) => setFontSize([size])}
       />
     );
   }
@@ -551,24 +566,60 @@ export const CalendarApp: React.FC = () => {
       <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
         <div className="flex h-screen bg-gray-50 dark:bg-gray-900" style={{ fontSize: `${fontSize[0]}px` }}>
           <CalendarSidebar
+            events={events}
             categories={categories}
-            onCategoryChange={setCategories}
+            setCategories={setCategories}
+            selectedCategories={selectedCategories}
+            setSelectedCategories={setSelectedCategories}
+            onEventClick={(event) => {
+              setSelectedEvent(event);
+              setIsNewEvent(false);
+              setIsEventModalOpen(true);
+            }}
+            onOpenCommandSearch={() => setShowSearch(true)}
+            onCreateNew={() => {
+              setSelectedEvent(null);
+              setIsNewEvent(true);
+              setIsEventModalOpen(true);
+            }}
             suggestedEvents={suggestedEvents}
-            collapsed={sidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onSuggestedEventDrop={(eventData, date) => {
+              const newEvent: CalendarEvent = {
+                id: Date.now().toString(),
+                title: eventData.title,
+                start: date.toISOString(),
+                end: new Date(date.getTime() + (eventData.duration || 1) * 60 * 60 * 1000).toISOString(),
+                description: eventData.description || '',
+                location: eventData.location || '',
+                attendees: eventData.defaultAttendees || 1,
+                category: eventData.category
+              };
+              setEvents(prev => [...prev, newEvent]);
+              toast({
+                title: "Event Added",
+                description: `${eventData.title} has been added to your calendar.`,
+              });
+            }}
+            isCollapsed={sidebarCollapsed}
           />
           
           <div className="flex-1 flex flex-col overflow-hidden">
             <TopMenuBar
-              onShowSummary={() => setShowSummary(true)}
-              onShowSearch={() => setShowSearch(true)}
-              onShowLogin={() => setShowLogin(true)}
-              onShowProfile={() => setShowProfile(true)}
-              onShowSettings={() => setShowSettings(true)}
-              onShowMail={() => setShowMail(true)}
+              onSearch={() => setShowSearch(true)}
               isLoggedIn={isLoggedIn}
-              username={username}
               onLogout={handleLogout}
+              onProfileClick={() => setShowProfile(true)}
+              onSettingsClick={() => setShowSettings(true)}
+              onLogin={() => setShowLogin(true)}
+              currentPage="calendar"
+              onPageChange={(page) => {
+                if (page === 'dashboard') setShowSummary(true);
+                if (page === 'mails') setShowMail(true);
+                if (page === 'profile') setShowProfile(true);
+                if (page === 'settings') setShowSettings(true);
+              }}
+              isSidebarCollapsed={sidebarCollapsed}
+              onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
             />
             
             <main className="flex-1 overflow-auto p-6">
@@ -581,11 +632,11 @@ export const CalendarApp: React.FC = () => {
           isOpen={isEventModalOpen}
           onClose={() => setIsEventModalOpen(false)}
           event={selectedEvent}
-          selectedDate={selectedDate}
+          isCreating={isNewEvent}
+          selectedDate={selectedDate || ''}
           categories={categories}
           onSave={handleSaveEvent}
           onDelete={handleDeleteEvent}
-          isNewEvent={isNewEvent}
         />
 
         <CommandSearch
@@ -599,6 +650,14 @@ export const CalendarApp: React.FC = () => {
             setIsEventModalOpen(true);
             setShowSearch(false);
           }}
+          onCreateNew={() => {
+            setSelectedEvent(null);
+            setIsNewEvent(true);
+            setIsEventModalOpen(true);
+            setShowSearch(false);
+          }}
+          onProfileClick={() => setShowProfile(true)}
+          onSettingsClick={() => setShowSettings(true)}
         />
 
         <LoginModal
