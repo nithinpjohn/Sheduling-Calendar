@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -73,8 +74,8 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: '1',
     title: 'Team Meeting',
-    start: '2024-06-15T10:00:00',
-    end: '2024-06-15T11:00:00',
+    start: '2025-06-16T10:00:00',
+    end: '2025-06-16T11:00:00',
     description: 'Weekly team sync meeting',
     location: 'Conference Room A',
     attendees: 8,
@@ -83,8 +84,8 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: '2',
     title: 'Client Presentation',
-    start: '2024-06-16T14:00:00',
-    end: '2024-06-16T15:30:00',
+    start: '2025-06-17T14:00:00',
+    end: '2025-06-17T15:30:00',
     description: 'Quarterly presentation to client',
     location: 'Main Conference Room',
     attendees: 12,
@@ -93,8 +94,8 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: '3',
     title: 'Doctor Appointment',
-    start: '2024-06-17T09:00:00',
-    end: '2024-06-17T10:00:00',
+    start: '2025-06-18T09:00:00',
+    end: '2025-06-18T10:00:00',
     description: 'Annual checkup',
     location: 'Medical Center',
     attendees: 2,
@@ -103,8 +104,8 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: '4',
     title: 'React Workshop',
-    start: '2024-06-18T13:00:00',
-    end: '2024-06-18T17:00:00',
+    start: '2025-06-19T13:00:00',
+    end: '2025-06-19T17:00:00',
     description: 'Advanced React patterns workshop',
     location: 'Training Room B',
     attendees: 15,
@@ -113,8 +114,8 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: '5',
     title: 'Vacation Day',
-    start: '2024-06-19T00:00:00',
-    end: '2024-06-19T23:59:59',
+    start: '2025-06-20T00:00:00',
+    end: '2025-06-20T23:59:59',
     description: 'Personal time off',
     location: 'Home',
     attendees: 1,
@@ -123,8 +124,8 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: '6',
     title: 'Project Planning',
-    start: '2024-06-20T15:00:00',
-    end: '2024-06-20T16:30:00',
+    start: '2025-06-21T15:00:00',
+    end: '2025-06-21T16:30:00',
     description: 'Q3 project planning session',
     location: 'Planning Room',
     attendees: 6,
@@ -133,8 +134,8 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: '7',
     title: 'Design Review Session',
-    start: '2024-06-21T11:00:00',
-    end: '2024-06-21T12:30:00',
+    start: '2025-06-22T11:00:00',
+    end: '2025-06-22T12:30:00',
     description: 'Review new UI/UX designs for mobile app',
     location: 'Design Studio',
     attendees: 5,
@@ -143,8 +144,8 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: '8',
     title: 'Dentist Appointment',
-    start: '2024-06-22T16:00:00',
-    end: '2024-06-22T17:00:00',
+    start: '2025-06-23T16:00:00',
+    end: '2025-06-23T17:00:00',
     description: 'Routine dental cleaning',
     location: 'Downtown Dental Clinic',
     attendees: 2,
@@ -153,8 +154,8 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: '9',
     title: 'JavaScript Masterclass',
-    start: '2024-06-23T09:00:00',
-    end: '2024-06-23T16:00:00',
+    start: '2025-06-24T09:00:00',
+    end: '2025-06-24T16:00:00',
     description: 'Full-day intensive JavaScript training workshop',
     location: 'Tech Hub Auditorium',
     attendees: 25,
@@ -162,9 +163,9 @@ const sampleEvents: CalendarEvent[] = [
   },
   {
     id: '10',
-    title: 'Tech Conference 2024',
-    start: '2024-06-24T08:00:00',
-    end: '2024-06-24T18:00:00',
+    title: 'Tech Conference 2025',
+    start: '2025-06-25T08:00:00',
+    end: '2025-06-25T18:00:00',
     description: 'Annual technology conference with keynote speakers',
     location: 'Convention Center',
     attendees: 500,
@@ -173,8 +174,8 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: '11',
     title: 'Family BBQ',
-    start: '2024-06-25T17:00:00',
-    end: '2024-06-25T21:00:00',
+    start: '2025-06-26T17:00:00',
+    end: '2025-06-26T21:00:00',
     description: 'Weekend family gathering and barbecue',
     location: 'Backyard',
     attendees: 12,
