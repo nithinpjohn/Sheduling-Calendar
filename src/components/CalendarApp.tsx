@@ -623,8 +623,8 @@ export const CalendarApp: React.FC = () => {
           onPageChange={setCurrentPage}
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          currentView={currentView}
-          onViewChange={handleViewChange}
+          containerWidth={containerWidth}
+          onContainerWidthChange={setContainerWidth}
         />
         
         <div className="flex flex-1 overflow-hidden">
@@ -657,39 +657,6 @@ export const CalendarApp: React.FC = () => {
           )}
           
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="border-b bg-white dark:bg-gray-900 p-4 border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="gap-2 rounded-lg">
-                        <Settings className="h-4 w-4" />
-                        Layout
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 rounded-lg">
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-gray-900 dark:text-white">Adjust Container Width</h4>
-                        <div className="space-y-2">
-                          <Label className="text-sm text-gray-600 dark:text-gray-400">
-                            Width: {containerWidth[0]}%
-                          </Label>
-                          <Slider
-                            value={containerWidth}
-                            onValueChange={setContainerWidth}
-                            max={100}
-                            min={50}
-                            step={5}
-                            className="w-full"
-                          />
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            </div>
-
             <div className="flex-1 overflow-hidden flex justify-center">
               <div 
                 className="transition-all duration-300"

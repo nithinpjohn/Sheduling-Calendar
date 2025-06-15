@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PanelLeftClose, PanelLeftOpen, AlignHorizontalSpaceAround, Grid, List, Calendar as CalendarView, Clock } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, AlignHorizontalSpaceAround } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -13,6 +13,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
 import { ThemeToggle } from './ThemeToggle';
 import { NotificationDropdown } from './NotificationDropdown';
 import { ProfileDropdown } from './ProfileDropdown';
@@ -30,9 +32,8 @@ interface TopMenuBarProps {
   onPageChange: (page: 'dashboard' | 'calendar' | 'profile' | 'settings' | 'mails') => void;
   isSidebarCollapsed: boolean;
   onToggleSidebar: () => void;
-  onLayoutToggle?: () => void;
-  currentView?: string;
-  onViewChange?: (view: string) => void;
+  containerWidth?: number[];
+  onContainerWidthChange?: (width: number[]) => void;
 }
 
 export const TopMenuBar: React.FC<TopMenuBarProps> = ({ 
@@ -46,17 +47,9 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
   onPageChange,
   isSidebarCollapsed,
   onToggleSidebar,
-  onLayoutToggle,
-  currentView = 'dayGridMonth',
-  onViewChange
+  containerWidth = [90],
+  onContainerWidthChange
 }) => {
-  const layoutOptions = [
-    { id: 'dayGridMonth', label: 'Month View', icon: Grid },
-    { id: 'timeGridWeek', label: 'Week View', icon: CalendarView },
-    { id: 'timeGridDay', label: 'Day View', icon: Clock },
-    { id: 'listWeek', label: 'List View', icon: List },
-  ];
-
   return (
     <TooltipProvider>
       <header className="border-b bg-white dark:bg-slate-800 shadow-sm">
@@ -97,7 +90,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
           <div className="flex items-center space-x-2">
             <SearchBar onSearch={onSearch} />
             
-            {onViewChange && (
+            {onContainerWidthChange && (
               <Popover>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -113,23 +106,22 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                   </TooltipTrigger>
                   <TooltipContent>Layout Options</TooltipContent>
                 </Tooltip>
-                <PopoverContent className="w-56 bg-white dark:bg-slate-800" align="end">
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-sm mb-3">Layout Options</h4>
-                    {layoutOptions.map((option) => {
-                      const IconComponent = option.icon;
-                      return (
-                        <Button
-                          key={option.id}
-                          variant={currentView === option.id ? "default" : "ghost"}
-                          className="w-full justify-start gap-2"
-                          onClick={() => onViewChange(option.id)}
-                        >
-                          <IconComponent className="h-4 w-4" />
-                          {option.label}
-                        </Button>
-                      );
-                    })}
+                <PopoverContent className="w-80 bg-white dark:bg-slate-800 rounded-lg" align="end">
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-gray-900 dark:text-white">Adjust Container Width</h4>
+                    <div className="space-y-2">
+                      <Label className="text-sm text-gray-600 dark:text-gray-400">
+                        Width: {containerWidth[0]}%
+                      </Label>
+                      <Slider
+                        value={containerWidth}
+                        onValueChange={onContainerWidthChange}
+                        max={100}
+                        min={50}
+                        step={5}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </PopoverContent>
               </Popover>
