@@ -619,6 +619,10 @@ export const CalendarApp: React.FC = () => {
           onProfileClick={() => handleProtectedAction(() => setCurrentPage('profile'))}
           onSettingsClick={() => handleProtectedAction(() => setCurrentPage('settings'))}
           onLogin={() => setShowLogin(true)}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
         
         <div className="flex flex-1 overflow-hidden">
@@ -654,43 +658,6 @@ export const CalendarApp: React.FC = () => {
             <div className="border-b bg-white dark:bg-gray-900 p-4 border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                  >
-                    {isSidebarCollapsed ? (
-                      <PanelLeftOpen className="h-4 w-4" />
-                    ) : (
-                      <PanelLeftClose className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant={currentPage === 'dashboard' ? "default" : "outline"}
-                    onClick={() => setCurrentPage('dashboard')}
-                    className="gap-2 rounded-lg"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    AI Dashboard
-                  </Button>
-                  <Button
-                    variant={currentPage === 'calendar' ? "default" : "outline"}
-                    onClick={() => setCurrentPage('calendar')}
-                    className="gap-2 rounded-lg"
-                  >
-                    <CalendarIcon className="h-4 w-4" />
-                    Calendar
-                  </Button>
-                  <Button
-                    variant={currentPage === 'mails' ? "default" : "outline"}
-                    onClick={() => handleProtectedAction(() => setCurrentPage('mails'))}
-                    className="gap-2 rounded-lg"
-                  >
-                    <Mail className="h-4 w-4" />
-                    My Mails
-                  </Button>
-                  
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="gap-2 rounded-lg">

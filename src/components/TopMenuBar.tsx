@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, User, Settings, LogOut, Monitor } from 'lucide-react';
+import { Search, Bell, User, Settings, LogOut, Monitor, CalendarIcon, BarChart3, Mail, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -30,6 +30,10 @@ interface TopMenuBarProps {
   onProfileClick: () => void;
   onSettingsClick: () => void;
   onLogin: () => void;
+  currentPage: 'dashboard' | 'calendar' | 'profile' | 'settings' | 'mails';
+  onPageChange: (page: 'dashboard' | 'calendar' | 'profile' | 'settings' | 'mails') => void;
+  isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
 }
 
 export const TopMenuBar: React.FC<TopMenuBarProps> = ({ 
@@ -38,10 +42,14 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
   onLogout, 
   onProfileClick, 
   onSettingsClick,
-  onLogin
+  onLogin,
+  currentPage,
+  onPageChange,
+  isSidebarCollapsed,
+  onToggleSidebar
 }) => {
   const [notificationTab, setNotificationTab] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPageNum, setCurrentPageNum] = useState(1);
   const itemsPerPage = 3;
   
   const notifications = [
@@ -62,33 +70,79 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
   });
 
   const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const startIndex = (currentPageNum - 1) * itemsPerPage;
   const paginatedNotifications = filteredNotifications.slice(startIndex, startIndex + itemsPerPage);
   const unreadCount = notifications.filter(n => n.unread).length;
+
+  const handleProtectedAction = (action: () => void) => {
+    if (!isLoggedIn) {
+      onLogin();
+    } else {
+      action();
+    }
+  };
 
   return (
     <header className="border-b bg-white dark:bg-slate-800 shadow-sm">
       <div className="flex items-center justify-between px-6 py-3">
-        {/* Logo */}
-        <div className="flex items-center space-x-4">
+        {/* Logo and Toggle Section */}
+        <div className="flex items-center space-x-4 w-64">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleSidebar}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
           <h1 className="text-2xl font-bold text-primary">Scede</h1>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex-1 max-w-xl mx-8">
+        {/* Center Navigation */}
+        <div className="flex items-center space-x-2">
+          <Button
+            variant={currentPage === 'dashboard' ? "default" : "outline"}
+            onClick={() => onPageChange('dashboard')}
+            className="gap-2 rounded-lg"
+          >
+            <BarChart3 className="h-4 w-4" />
+            AI Dashboard
+          </Button>
+          <Button
+            variant={currentPage === 'calendar' ? "default" : "outline"}
+            onClick={() => onPageChange('calendar')}
+            className="gap-2 rounded-lg"
+          >
+            <CalendarIcon className="h-4 w-4" />
+            Calendar
+          </Button>
+          <Button
+            variant={currentPage === 'mails' ? "default" : "outline"}
+            onClick={() => handleProtectedAction(() => onPageChange('mails'))}
+            className="gap-2 rounded-lg"
+          >
+            <Mail className="h-4 w-4" />
+            My Mails
+          </Button>
+        </div>
+
+        {/* Right Side - Search, Theme, Notifications and Profile */}
+        <div className="flex items-center space-x-2">
+          {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search events... (⌘K)"
-              className="pl-10 cursor-pointer bg-white dark:bg-slate-700"
+              placeholder="Search... (⌘K)"
+              className="pl-10 cursor-pointer bg-white dark:bg-slate-700 w-64"
               onClick={onSearch}
               readOnly
             />
           </div>
-        </div>
-
-        {/* Right Side - Theme, Notifications and Profile */}
-        <div className="flex items-center space-x-2">
+          
           <ThemeToggle />
           
           {isLoggedIn ? (
@@ -115,7 +169,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                   <div className="p-2">
                     <Tabs value={notificationTab} onValueChange={(value) => {
                       setNotificationTab(value);
-                      setCurrentPage(1);
+                      setCurrentPageNum(1);
                     }}>
                       <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
@@ -146,15 +200,15 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                               <PaginationContent>
                                 <PaginationItem>
                                   <PaginationPrevious 
-                                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                    onClick={() => setCurrentPageNum(Math.max(1, currentPageNum - 1))}
+                                    className={currentPageNum === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                                   />
                                 </PaginationItem>
                                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                                   <PaginationItem key={page}>
                                     <PaginationLink
-                                      onClick={() => setCurrentPage(page)}
-                                      isActive={currentPage === page}
+                                      onClick={() => setCurrentPageNum(page)}
+                                      isActive={currentPageNum === page}
                                       className="cursor-pointer"
                                     >
                                       {page}
@@ -163,8 +217,8 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                                 ))}
                                 <PaginationItem>
                                   <PaginationNext 
-                                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                    onClick={() => setCurrentPageNum(Math.min(totalPages, currentPageNum + 1))}
+                                    className={currentPageNum === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                                   />
                                 </PaginationItem>
                               </PaginationContent>
