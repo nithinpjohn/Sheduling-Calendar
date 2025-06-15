@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CalendarEvent, EventCategory } from './CalendarApp';
 import { VideoConferenceForm } from './VideoConferenceForm';
@@ -54,9 +55,9 @@ export const EventModal: React.FC<EventModalProps> = ({
   });
   
   const [videoConference, setVideoConference] = useState({
-    platform: 'zoom' as 'zoom' | 'teams' | 'meet',
-    url: '',
-    meetingId: '',
+    platform: 'zoom',
+    link: '',
+    autoGenerate: true,
   });
   
   const [attendeeList, setAttendeeList] = useState<Array<{
@@ -87,8 +88,8 @@ export const EventModal: React.FC<EventModalProps> = ({
         
         setVideoConference({
           platform: 'zoom',
-          url: '',
-          meetingId: '',
+          link: '',
+          autoGenerate: true,
         });
         
         setAttendeeList([]);
@@ -108,13 +109,13 @@ export const EventModal: React.FC<EventModalProps> = ({
           endTime: format(endDate, 'HH:mm'),
         });
         
-        setVideoConference({
-          platform: event.videoConference?.platform || 'zoom',
-          url: event.videoConference?.url || '',
-          meetingId: event.videoConference?.meetingId || '',
+        setVideoConference(event.videoConference || {
+          platform: 'zoom',
+          link: '',
+          autoGenerate: true,
         });
         
-        setAttendeeList([]);
+        setAttendeeList(event.attendeeList || []);
       }
       setErrors({});
     }
@@ -172,7 +173,8 @@ export const EventModal: React.FC<EventModalProps> = ({
       category: formData.category,
       start: startDateTime.toISOString(),
       end: endDateTime.toISOString(),
-      videoConference: videoConference.url ? videoConference : undefined,
+      videoConference: videoConference.link ? videoConference : undefined,
+      attendeeList: attendeeList.length > 0 ? attendeeList : undefined,
     };
 
     onSave(eventData);
@@ -383,13 +385,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                 <TabsContent value="video" className="space-y-4 p-1 h-full">
                   <VideoConferenceForm
                     value={videoConference}
-                    onChange={(value) => {
-                      setVideoConference({
-                        platform: value.platform,
-                        url: value.url,
-                        meetingId: value.meetingId || '',
-                      });
-                    }}
+                    onChange={setVideoConference}
                   />
                 </TabsContent>
 

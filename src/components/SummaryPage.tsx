@@ -13,8 +13,8 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStr
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Cell } from 'recharts';
 
 export interface SummaryPageProps {
   events: CalendarEvent[];
@@ -143,7 +143,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
       color: "#3B82F6",
     },
     productivity: {
-      label: "Productivity", 
+      label: "Productivity",
       color: "#10B981",
     },
   };
@@ -316,20 +316,18 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
             </CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig} className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="events" 
-                      stroke="#3B82F6" 
-                      strokeWidth={2} 
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <LineChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="events" 
+                    stroke="var(--color-events)" 
+                    strokeWidth={2} 
+                  />
+                </LineChart>
               </ChartContainer>
             </CardContent>
           </Card>
@@ -347,19 +345,17 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
             </CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig} className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyActivityData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar 
-                      dataKey="events" 
-                      fill="#3B82F6" 
-                      radius={[4, 4, 0, 0]} 
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart data={weeklyActivityData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar 
+                    dataKey="events" 
+                    fill="var(--color-events)" 
+                    radius={[4, 4, 0, 0]} 
+                  />
+                </BarChart>
               </ChartContainer>
             </CardContent>
           </Card>
