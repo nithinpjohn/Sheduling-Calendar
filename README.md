@@ -10,7 +10,7 @@ There are several ways of editing your application.
 
 **Use Lovable**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/cee9f59b-1ce0-4c7d-8d1d-3c2e2c5c3a90) and start prompting.
+Simply visit the (https://elegant-scheduling-tool.lovable.app)
 
 Changes made via Lovable will be committed automatically to this repo.
 
