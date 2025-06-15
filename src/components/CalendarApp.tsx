@@ -129,6 +129,56 @@ const sampleEvents: CalendarEvent[] = [
     location: 'Planning Room',
     attendees: 6,
     category: '1'
+  },
+  {
+    id: '7',
+    title: 'Design Review Session',
+    start: '2024-06-21T11:00:00',
+    end: '2024-06-21T12:30:00',
+    description: 'Review new UI/UX designs for mobile app',
+    location: 'Design Studio',
+    attendees: 5,
+    category: '1'
+  },
+  {
+    id: '8',
+    title: 'Dentist Appointment',
+    start: '2024-06-22T16:00:00',
+    end: '2024-06-22T17:00:00',
+    description: 'Routine dental cleaning',
+    location: 'Downtown Dental Clinic',
+    attendees: 2,
+    category: '2'
+  },
+  {
+    id: '9',
+    title: 'JavaScript Masterclass',
+    start: '2024-06-23T09:00:00',
+    end: '2024-06-23T16:00:00',
+    description: 'Full-day intensive JavaScript training workshop',
+    location: 'Tech Hub Auditorium',
+    attendees: 25,
+    category: '3'
+  },
+  {
+    id: '10',
+    title: 'Tech Conference 2024',
+    start: '2024-06-24T08:00:00',
+    end: '2024-06-24T18:00:00',
+    description: 'Annual technology conference with keynote speakers',
+    location: 'Convention Center',
+    attendees: 500,
+    category: '4'
+  },
+  {
+    id: '11',
+    title: 'Family BBQ',
+    start: '2024-06-25T17:00:00',
+    end: '2024-06-25T21:00:00',
+    description: 'Weekend family gathering and barbecue',
+    location: 'Backyard',
+    attendees: 12,
+    category: '5'
   }
 ];
 
