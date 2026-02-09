@@ -60,7 +60,7 @@ function DraggableCard({ id, children }: { id: string; children: React.ReactNode
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 right-2 z-10 p-1 bg-white dark:bg-gray-800 rounded border opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+        className="absolute top-2 right-2 z-10 p-1 bg-white/90 dark:bg-slate-800/90 rounded-full border border-slate-200/70 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
       >
         <GripVertical className="h-4 w-4 text-gray-500" />
       </div>
@@ -205,7 +205,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
     switch (card.type) {
       case 'events-overview':
         return (
-          <Card className="h-full">
+          <Card className="h-full surface-card">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-purple-600" />
@@ -214,7 +214,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                <div className="p-4 surface-muted">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-500 rounded-lg">
                       <Calendar className="h-5 w-5 text-white" />
@@ -226,7 +226,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                   </div>
                 </div>
 
-                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+                <div className="p-4 surface-muted">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-green-500 rounded-lg">
                       <TrendingUp className="h-5 w-5 text-white" />
@@ -238,7 +238,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                   </div>
                 </div>
 
-                <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                <div className="p-4 surface-muted">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-purple-500 rounded-lg">
                       <Target className="h-5 w-5 text-white" />
@@ -250,7 +250,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                   </div>
                 </div>
 
-                <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-lg">
+                <div className="p-4 surface-muted">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-orange-500 rounded-lg">
                       <MapPin className="h-5 w-5 text-white" />
@@ -268,7 +268,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
 
       case 'upcoming-meetings':
         return (
-          <Card className="h-full">
+          <Card className="h-full surface-card">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-blue-600" />
@@ -281,7 +281,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                   {thisWeekEvents.slice(0, 3).map((event) => {
                     const category = categories.find(c => c.id === event.category);
                     return (
-                      <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div key={event.id} className="flex items-center justify-between p-3 surface-muted">
                         <div>
                           <p className="font-medium">{event.title}</p>
                           <p className="text-sm text-muted-foreground">
@@ -307,7 +307,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
 
       case 'monthly-trends':
         return (
-          <Card className="h-full">
+          <Card className="h-full surface-card">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-green-600" />
@@ -351,7 +351,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
 
       case 'weekly-activity':
         return (
-          <Card className="h-full">
+          <Card className="h-full surface-card">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5 text-purple-600" />
@@ -393,7 +393,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
 
       case 'category-analytics':
         return (
-          <Card className="h-full">
+          <Card className="h-full surface-card">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <PieChart className="h-5 w-5 text-orange-600" />
@@ -404,7 +404,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
             <CardContent className="pb-2">
               <div className="space-y-4">
                 {categoryData.map((category, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div 
                         className="w-4 h-4 rounded-full shadow-sm" 
@@ -439,7 +439,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
 
       case 'productivity-insights':
         return (
-          <Card className="h-full">
+          <Card className="h-full surface-card">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5 text-indigo-600" />
@@ -448,7 +448,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
               <CardDescription>Week-over-week comparison</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+              <div className="flex items-center justify-between p-3 surface-muted">
                 <div>
                   <p className="text-sm text-green-600 dark:text-green-400">Events Completed</p>
                   <p className="text-2xl font-bold text-green-900 dark:text-green-100">
@@ -459,7 +459,7 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                   <TrendingUp className="h-8 w-8" />
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <div className="flex items-center justify-between p-3 surface-muted">
                 <div>
                   <p className="text-sm text-blue-600 dark:text-blue-400">Avg Duration</p>
                   <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
@@ -480,18 +480,18 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50 dark:bg-gray-900">
+    <div className="h-full overflow-y-auto bg-slate-100/60 dark:bg-slate-950">
       <div className="p-6">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">AI Dashboard</h1>
-            <p className="text-gray-600 dark:text-gray-400">Intelligent insights and analytics for your calendar events</p>
+            <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">AI Dashboard</h1>
+            <p className="text-slate-600 dark:text-slate-400">Intelligent insights and analytics for your calendar events</p>
           </div>
           <div className="flex items-center gap-3">
             <Dialog open={isCustomizeOpen} onOpenChange={setIsCustomizeOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button variant="outline" className="flex items-center gap-2 rounded-full shadow-sm">
                   <Settings className="h-4 w-4" />
                   Customize Widgets
                 </Button>
@@ -519,11 +519,11 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="outline" onClick={onOpenCommandSearch} className="flex items-center gap-2">
+            <Button variant="outline" onClick={onOpenCommandSearch} className="flex items-center gap-2 rounded-full shadow-sm">
               <Search className="h-4 w-4" />
               Quick Search
             </Button>
-            <Button onClick={onCreateNew} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700">
+            <Button onClick={onCreateNew} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 rounded-full shadow-sm">
               <Plus className="h-4 w-4" />
               Create Event
             </Button>
@@ -532,58 +532,58 @@ export const SummaryPage: React.FC<SummaryPageProps> = ({
 
         {/* Stats Cards */}
         <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <Card className="surface-card">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Events</p>
-                  <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">{events.length}</p>
+                  <p className="text-sm font-medium text-slate-500">Total Events</p>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{events.length}</p>
                 </div>
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-2xl">
                   <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+          <Card className="surface-card">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">This Week</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{thisWeekEvents.length}</p>
+                  <p className="text-sm font-medium text-slate-500">This Week</p>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{thisWeekEvents.length}</p>
                 </div>
-                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-2xl">
                   <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
+          <Card className="surface-card">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Categories</p>
-                  <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">{categories.length}</p>
+                  <p className="text-sm font-medium text-slate-500">Categories</p>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{categories.length}</p>
                 </div>
-                <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-2xl">
                   <Target className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800">
+          <Card className="surface-card">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Productivity</p>
-                  <p className="text-3xl font-bold text-yellow-900 dark:text-yellow-100">
+                  <p className="text-sm font-medium text-slate-500">Productivity</p>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-white">
                     {events.length > 0 ? '+15%' : '0%'}
                   </p>
                 </div>
-                <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+                <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-2xl">
                   <Zap className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>

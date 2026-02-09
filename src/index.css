@@ -7,7 +7,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 220 33% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -35,7 +35,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 262.1 83.3% 57.8%;
 
-    --radius: 8px;
+    --radius: 14px;
 
     --sidebar-background: 255 255 255;
     --sidebar-foreground: 15 23 42;
@@ -97,6 +97,20 @@
   }
 }
 
+@layer components {
+  .surface-card {
+    @apply bg-white/90 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl shadow-sm;
+  }
+
+  .surface-card-strong {
+    @apply bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-md;
+  }
+
+  .surface-muted {
+    @apply bg-slate-50/80 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl;
+  }
+}
+
 /* Modern FullCalendar styling */
 .fc {
   @apply bg-transparent;
@@ -112,7 +126,7 @@
 }
 
 .fc-button {
-  @apply bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-4 py-2 font-medium transition-colors;
+  @apply bg-white/80 dark:bg-gray-800 border border-slate-200/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 rounded-full px-4 py-2 font-medium transition-colors shadow-sm;
   box-shadow: none !important;
 }
 

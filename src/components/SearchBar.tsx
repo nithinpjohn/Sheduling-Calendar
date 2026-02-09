@@ -20,7 +20,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Search... (⌘K)"
-            className="pl-10 cursor-pointer bg-white dark:bg-slate-700 w-64"
+            className="pl-10 cursor-pointer bg-white/80 dark:bg-slate-800/80 w-64 rounded-full border-slate-200/70 shadow-sm hover:bg-white transition"
             onClick={onSearch}
             readOnly
           />
