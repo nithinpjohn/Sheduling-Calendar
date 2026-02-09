@@ -52,8 +52,8 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
 }) => {
   return (
     <TooltipProvider>
-      <header className="border-b bg-white dark:bg-slate-800 shadow-sm">
-        <div className="flex items-center justify-between px-6 py-3">
+      <header className="border-b border-slate-200/70 bg-white/80 dark:bg-slate-900/80 backdrop-blur shadow-sm">
+        <div className="flex items-center justify-between px-6 py-4">
           {/* Logo and Toggle Section */}
           <div className="flex items-center space-x-4 w-64">
             <Tooltip>
@@ -75,7 +75,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                 {isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
               </TooltipContent>
             </Tooltip>
-            <h1 className="text-2xl font-bold text-primary">Scede</h1>
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">Scede</h1>
           </div>
 
           {/* Center Navigation */}
@@ -98,7 +98,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                        className="hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-full"
                       >
                         <AlignHorizontalSpaceAround className="h-5 w-5" />
                       </Button>
@@ -106,7 +106,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                   </TooltipTrigger>
                   <TooltipContent>Layout Options</TooltipContent>
                 </Tooltip>
-                <PopoverContent className="w-80 bg-white dark:bg-slate-800 rounded-lg" align="end">
+                <PopoverContent className="w-80 bg-white/95 dark:bg-slate-900 rounded-2xl border border-slate-200/70 shadow-lg" align="end">
                   <div className="space-y-4">
                     <h4 className="font-medium text-gray-900 dark:text-white">Adjust Container Width</h4>
                     <div className="space-y-2">

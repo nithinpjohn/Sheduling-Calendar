@@ -153,12 +153,12 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   }
 
   return (
-    <div className="w-80 bg-card border-r border-border flex-shrink-0 h-full overflow-hidden">
+    <div className="w-80 bg-white/80 dark:bg-slate-900/70 border-r border-slate-200/70 dark:border-slate-800 flex-shrink-0 h-full overflow-hidden backdrop-blur">
       <div className="h-full flex flex-col">
         <div className="p-6 flex-1 overflow-y-auto">
           <div className="space-y-6">
             {/* Create Event Button */}
-            <Button onClick={onCreateNew} className="w-full gap-2 rounded-lg">
+            <Button onClick={onCreateNew} className="w-full gap-2 rounded-full shadow-sm">
               <Plus className="h-4 w-4" />
               Create Event
             </Button>
@@ -172,11 +172,11 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                 </Label>
                 <Popover open={isCreatingCategory} onOpenChange={setIsCreatingCategory}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="rounded-lg">
+                    <Button variant="outline" size="sm" className="rounded-full">
                       <Plus className="h-3 w-3" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80 rounded-lg">
+                  <PopoverContent className="w-80 rounded-2xl border border-slate-200/70 shadow-lg">
                     <div className="space-y-4">
                       <h4 className="font-medium">Create Category</h4>
                       <div className="space-y-2">
@@ -185,7 +185,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                           placeholder="Category name"
                           value={newCategoryName}
                           onChange={(e) => setNewCategoryName(e.target.value)}
-                          className="rounded-lg"
+                          className="rounded-full"
                         />
                       </div>
                       <div className="space-y-2">
@@ -196,14 +196,14 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                         />
                       </div>
                       <div className="flex gap-2">
-                        <Button onClick={createCategory} size="sm" className="rounded-lg">
+                        <Button onClick={createCategory} size="sm" className="rounded-full">
                           Create
                         </Button>
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={() => setIsCreatingCategory(false)}
-                          className="rounded-lg"
+                          className="rounded-full"
                         >
                           Cancel
                         </Button>
@@ -264,14 +264,14 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                   Shuffle
                 </Button>
               </div>
-              <ScrollArea className="h-48">
+              <ScrollArea className="h-52">
                 <div className="space-y-2">
                   {suggestionsToRender.map((suggestedEvent) => {
                     const category = getCategory(suggestedEvent.category);
                     return (
                       <Card
                         key={suggestedEvent.id}
-                        className="cursor-move transition-all hover:shadow-md border-l-4 select-none draggable-event rounded-lg"
+                        className="cursor-move transition-all hover:shadow-md border-l-4 select-none draggable-event surface-card"
                         style={{ borderLeftColor: category?.color }}
                         draggable={true}
                         onDragStart={(e) => handleDragStart(e, suggestedEvent)}
@@ -323,7 +323,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                     return (
                       <Card
                         key={event.id}
-                        className="cursor-pointer transition-all hover:shadow-md border-l-4 rounded-lg"
+                        className="cursor-pointer transition-all hover:shadow-md border-l-4 surface-card"
                         style={{ borderLeftColor: category?.color }}
                         onClick={() => onEventClick(event)}
                       >
@@ -362,13 +362,13 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                 Quick Stats
               </Label>
               <div className="grid grid-cols-2 gap-2">
-                <Card className="rounded-lg">
+                <Card className="surface-card">
                   <CardContent className="p-3 text-center">
                     <div className="text-2xl font-bold text-primary">{safeEvents.length}</div>
                     <div className="text-xs text-muted-foreground">Total Events</div>
                   </CardContent>
                 </Card>
-                <Card className="rounded-lg">
+                <Card className="surface-card">
                   <CardContent className="p-3 text-center">
                     <div className="text-2xl font-bold text-green-600">
                       {upcomingEvents.length}

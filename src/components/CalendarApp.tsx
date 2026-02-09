@@ -595,11 +595,11 @@ export const CalendarApp: React.FC = () => {
 
     return (
       <div className="h-full overflow-auto">
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="surface-card-strong overflow-hidden">
+          <div className="p-8 border-b border-slate-200/70 dark:border-slate-800 bg-gradient-to-r from-white/80 to-slate-50/90 dark:from-gray-900 dark:to-gray-800">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
                   {currentView === 'dayGridMonth' && 'Month Overview'}
                   {currentView === 'timeGridWeek' && 'Weekly Schedule'}
                   {currentView === 'timeGridDay' && 'Daily Agenda'}
@@ -613,7 +613,7 @@ export const CalendarApp: React.FC = () => {
                   variant={currentView === 'dayGridMonth' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleViewChange('dayGridMonth')}
-                  className="rounded-lg"
+                  className="rounded-full shadow-sm"
                 >
                   Month
                 </Button>
@@ -621,7 +621,7 @@ export const CalendarApp: React.FC = () => {
                   variant={currentView === 'timeGridWeek' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleViewChange('timeGridWeek')}
-                  className="rounded-lg"
+                  className="rounded-full shadow-sm"
                 >
                   Week
                 </Button>
@@ -629,7 +629,7 @@ export const CalendarApp: React.FC = () => {
                   variant={currentView === 'timeGridDay' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleViewChange('timeGridDay')}
-                  className="rounded-lg"
+                  className="rounded-full shadow-sm"
                 >
                   Day
                 </Button>
@@ -637,7 +637,7 @@ export const CalendarApp: React.FC = () => {
                   variant={currentView === 'gantt' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleViewChange('gantt')}
-                  className="rounded-lg"
+                  className="rounded-full shadow-sm"
                 >
                   Gantt
                 </Button>
@@ -790,7 +790,7 @@ export const CalendarApp: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <div className="flex flex-col h-screen bg-slate-50 dark:bg-gray-950 w-full">
+      <div className="flex flex-col h-screen bg-slate-100/70 dark:bg-gray-950 w-full">
         <TopMenuBar 
           onSearch={() => setIsCommandOpen(true)}
           isLoggedIn={isLoggedIn}
